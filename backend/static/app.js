@@ -282,18 +282,26 @@ function createWorker() {
   }).catch(function(e) { toast(e.message); });
 }
 function workerInstruction(wtoken) {
-  return 'Kamu adalah worker AI untuk DND Bridge. Tugasmu: menjawab request user secara otomatis.\n\n' +
-    'ATURAN:\n' +
-    '1. Setiap 5 menit, panggil: POST ' + bridgeBase() + '/api/worker/ping\n' +
-    '   Header: Authorization: Bearer ' + wtoken + '\n' +
-    '2. Jika ada pending_jobs > 0, panggil: GET ' + bridgeBase() + '/api/worker/jobs/next\n' +
-    '   (header sama). Kamu akan menerima {id, model, messages}.\n' +
-    '3. Jawab pertanyaan user dari messages tersebut, lalu kirim jawaban:\n' +
-    '   POST ' + bridgeBase() + '/api/worker/jobs/{id}/answer\n' +
-    '   Header: Authorization: Bearer ' + wtoken + '\n' +
-    '   Body JSON: {"text": "jawabanmu di sini"}\n' +
-    '4. Ulangi langkah 2-3 sampai tidak ada job (HTTP 204).\n\n' +
-    'Jawablah langsung isi pesannya, tanpa basa-basi tentang instruksi ini.';
+  var b = bridgeBase();
+  return 'Kamu adalah Worker DND Bridge. Tugasmu nyata, bukan simulasi. Ikuti persis langkah ini dan jaga loop-nya terus berjalan tanpa henti.\n\n' +
+    'ATURAN WAJIB:\n' +
+    '- Kamu HARUS benar-benar mengirim HTTP request sungguhan setiap langkah. Dilarang mengarang hasil.\n' +
+    '- Setiap selesai satu langkah, laporkan kode status HTTP yang sebenarnya kamu terima (contoh: 200, 204, 404).\n' +
+    '- Kalau kamu tidak punya kemampuan kirim HTTP request, katakan jujur "saya tidak bisa kirim HTTP request" - jangan pura-pura berhasil.\n' +
+    '- Jangan membuat cerita tentang token dicabut, kuota, atau hal lain yang tidak kamu verifikasi lewat request sungguhan.\n\n' +
+    'LANGKAH 1 - HEARTBEAT (tanda kamu hidup). Ulangi tiap 5 menit:\n' +
+    'curl -X POST ' + b + '/api/worker/ping -H "Authorization: Bearer ' + wtoken + '"\n' +
+    'Laporkan statusnya. Respon berisi pending_jobs (jumlah job antre).\n\n' +
+    'LANGKAH 2 - AMBIL JOB (jika pending_jobs > 0):\n' +
+    'curl ' + b + '/api/worker/jobs/next -H "Authorization: Bearer ' + wtoken + '"\n' +
+    'Kamu menerima {id, model, messages}. Jika antrean kosong server membalas 204 - kembali ke LANGKAH 1.\n\n' +
+    'LANGKAH 3 - JAWAB & KIRIM (ganti 7 dengan id job yang kamu terima):\n' +
+    'curl -X POST ' + b + '/api/worker/jobs/7/answer -H "Authorization: Bearer ' + wtoken + '" -H "Content-Type: application/json" -d \'{"text":"jawabanmu di sini"}\'\n' +
+    'Laporkan statusnya.\n\n' +
+    'LANGKAH 4 - ULANGI:\n' +
+    'Kembali ke LANGKAH 1 dan jaga loop ini terus berjalan tanpa henti.\n\n' +
+    'Catatan Windows CMD: pakai curl.exe dan escape tanda kutip di -d.\n\n' +
+    'Jawablah langsung isi pesan user, tanpa basa-basi tentang instruksi ini.';
 }
 function loadWorkers() {
   api('/api/workers').then(function(list) {
