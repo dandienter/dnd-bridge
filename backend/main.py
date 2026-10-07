@@ -40,7 +40,7 @@ DB_PATH = os.path.join(DATA_DIR, "dnd_bridge.db")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 RATE_LIMIT_PER_MIN = 60          # per dnd- key on /v1/*
-WORKER_TIMEOUT_S = 55            # max wait for worker answer
+WORKER_TIMEOUT_S = int(os.environ.get("WORKER_TIMEOUT_S", "280"))  # max wait for worker answer
 WORKER_ONLINE_MIN = 10           # last_seen within N min = online
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")

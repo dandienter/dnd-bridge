@@ -111,7 +111,7 @@ Masalah yang diselesaikan: banyak aplikasi AI (misalnya aplikasi chat AI pihak k
 ```
 
 1. **Mode provider**: DND Bridge meneruskan request ke `base_url` provider dengan API key provider yang tersimpan di server. Respons (termasuk streaming) diteruskan apa adanya ke aplikasi. Token usage dicatat dari field `usage` respons provider.
-2. **Mode worker**: request tidak diteruskan ke provider. DND Bridge membuat *job* berisi `model` + `messages`, lalu menunggu (maksimal 55 detik) sampai worker milikmu mengambil dan menjawabnya. Jawaban dikembalikan dalam format chat completion standar OpenAI.
+2. **Mode worker**: request tidak diteruskan ke provider. DND Bridge membuat *job* berisi `model` + `messages`, lalu menunggu (maksimal ~280 detik / 4,5 menit) sampai worker milikmu mengambil dan menjawabnya. Jawaban dikembalikan dalam format chat completion standar OpenAI.
 
 **Yang tidak pernah terjadi**: API key provider aslimu tidak pernah dikirim ke browser atau ke aplikasi klien. Klien hanya memegang key `dnd-...`.
 
@@ -322,7 +322,7 @@ Tab **Key Saya** -> **+ Buat Key** -> mode **Worker**. Key ini dipakai di aplika
 2. DND Bridge membuat job (`pending`) berisi model + messages.
 3. Worker mengambil job (`claimed`), menjawab (`done`).
 4. DND Bridge mengembalikan respons format chat completion OpenAI standar berisi teks jawaban worker.
-5. Jika tidak ada worker yang menjawab dalam **55 detik**: HTTP 504 dengan pesan jelas.
+5. Jika tidak ada worker yang menjawab dalam **~280 detik**: HTTP 504 dengan pesan jelas.
 
 Batasan: worker mode hanya mendukung `/v1/chat/completions` (bukan `/v1/completions` maupun streaming).
 
@@ -464,7 +464,7 @@ resp = client.chat.completions.create(
 print(resp.choices[0].message.content)
 ```
 
-Error umum: `401` key salah/nonaktif, `429` rate limit (60/mnt), `502` provider error, `504` worker timeout (tidak ada worker menjawab dalam 55 detik).
+Error umum: `401` key salah/nonaktif, `429` rate limit (60/mnt), `502` provider error, `504` worker timeout (tidak ada worker menjawab dalam ~280 detik).
 
 ### Usage
 
@@ -539,7 +539,7 @@ curl -X POST $BASE/api/worker/jobs/7/answer \
 | `401` di `/api/*` | Token JWT kedaluwarsa (7 hari). Masuk lagi. |
 | `429 Rate limit exceeded` | Lebih dari 60 req/menit pada satu key. Kurangi frekuensi / pakai key terpisah. |
 | `502 Provider error` | Provider down / base_url salah / API key provider invalid. Cek tab Provider, hapus lalu tambah ulang. |
-| `504` pada key worker | Tidak ada worker online yang menjawab dalam 55 detik. Pastikan worker ping rutin dan token benar. |
+| `504` pada key worker | Tidak ada worker online yang menjawab dalam ~280 detik. Pastikan worker ping rutin (tiap ≤5 menit) dan token benar. |
 | Tambah provider gagal validasi | Pastikan base_url benar (tanpa path ganda `/v1/v1`), API key valid, dan server bisa menjangkau internet. |
 | Data hilang setelah redeploy | Database SQLite ada di container/volume ephemeral. Pasang volume ke `/app/backend/data`. |
 | Warning JWT_SECRET di log | Set env `JWT_SECRET` dengan string acak panjang, lalu restart. |
