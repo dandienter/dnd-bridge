@@ -397,18 +397,29 @@ def list_keys(user: dict = Depends(get_current_user)):
         """SELECT k.id, k.name, k.key_prefix, k.mode, k.provider_id, k.created_at,
                   k.last_used_at, k.is_active, p.name AS provider_name,
                   (SELECT COUNT(*) FROM usage_log u WHERE u.key_id=k.id) AS reqs,
-                  (SELECT COALESCE(SUM(u.prompt_tokens+u.completion_tokens),0)
-                   FROM usage_log u WHERE u.key_id=k.id) AS toks
+                  (SELECT COALESCE(SUM(u.prompt_tokens),0) FROM usage_log u WHERE u.key_id=k.id) AS ptok,
+                  (SELECT COALESCE(SUM(u.completion_tokens),0) FROM usage_log u WHERE u.key_id=k.id) AS ctok
            FROM keys k LEFT JOIN providers p ON p.id=k.provider_id
            WHERE k.user_id=? ORDER BY k.id DESC""", (user["id"],)).fetchall()
+    wrows = con.execute(
+        "SELECT name, last_seen_at FROM workers WHERE user_id=? ORDER BY last_seen_at DESC",
+        (user["id"],)).fetchall()
     con.close()
+    winfo = None
+    if wrows:
+        winfo = {"name": wrows[0]["name"],
+                 "is_online": any(worker_online(w["last_seen_at"]) for w in wrows),
+                 "count": len(wrows)}
     return [{"id": r["id"], "name": r["name"],
              "key_display": r["key_prefix"] + "\u2022\u2022\u2022\u2022",
              "mode": r["mode"], "provider_id": r["provider_id"],
              "provider_name": r["provider_name"],
              "created_at": r["created_at"], "last_used_at": r["last_used_at"],
              "is_active": bool(r["is_active"]),
-             "total_requests": r["reqs"], "total_tokens": r["toks"]}
+             "total_requests": r["reqs"],
+             "prompt_tokens": r["ptok"], "completion_tokens": r["ctok"],
+             "total_tokens": r["ptok"] + r["ctok"],
+             "worker": winfo}
             for r in rows]
 
 

@@ -121,6 +121,26 @@ function fmtNum(n) {
   if (n >= 1000) return (n / 1000).toFixed(1) + 'rb';
   return String(n);
 }
+var ID_MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function relTime(iso) {
+  if (!iso) return 'belum pernah';
+  var s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 0) s = 0;
+  if (s < 60) return s + 'dtk lalu';
+  if (s < 3600) return Math.floor(s / 60) + 'mnt lalu';
+  if (s < 86400) return Math.floor(s / 3600) + 'jam lalu';
+  return Math.floor(s / 86400) + 'hr lalu';
+}
+function fmtDateID(iso) {
+  if (!iso) return '-';
+  var d = new Date(iso);
+  var hh = String(d.getHours()).padStart(2, '0'), mm = String(d.getMinutes()).padStart(2, '0');
+  return d.getDate() + ' ' + ID_MONTHS[d.getMonth()] + ', ' + hh + '.' + mm;
+}
+function infoRow(label, val, last) {
+  return '<div class="flex items-center justify-between py-1.5 text-sm' + (last ? '' : ' border-b-2 border-dashed border-[#16161622]') + '">' +
+    '<span class="font-semibold text-[#161616aa]">' + label + '</span><span>' + val + '</span></div>';
+}
 function loadDashboard() {
   Promise.all([api('/api/keys'), api('/api/usage/summary')]).then(function(res) {
     var keys = res[0], sum = res[1];
@@ -224,28 +244,41 @@ function createKey() {
 }
 function loadKeys() {
   api('/api/keys').then(function(list) {
+    var maxReq = Math.max.apply(null, list.map(function(k) { return k.total_requests; }).concat([1]));
     document.getElementById('keyList').innerHTML = list.length ? list.map(function(k) {
       var modeBadge = k.mode === 'worker'
         ? '<span class="nb-badge nb-purple">worker</span>'
         : '<span class="nb-badge nb-blue">provider</span>';
-      var stBadge = k.is_active
-        ? '<span class="nb-badge nb-green"><span class="dot" style="background:#16a34a"></span>aktif</span>'
-        : '<span class="nb-badge" style="background:#E8E8E8"><span class="dot" style="background:#999"></span>nonaktif</span>';
-      return '<div class="nb nb-sm p-4">' +
-        '<div class="flex items-center justify-between gap-2 mb-2"><div class="font-extrabold truncate">' + esc(k.name) + '</div>' +
-        '<div class="flex gap-1.5 shrink-0">' + modeBadge + stBadge + '</div></div>' +
-        '<div class="font-mono text-xs font-bold text-[#16161699] mb-1">' + esc(k.key_display) + '</div>' +
-        '<div class="text-xs font-semibold text-[#16161699] mb-3">' +
-        (k.provider_name ? 'Provider: ' + esc(k.provider_name) + ' &middot; ' : '') +
-        k.total_requests + ' request &middot; ' + fmtNum(k.total_tokens) + ' token' +
-        (k.last_used_at ? ' &middot; terakhir: ' + k.last_used_at.slice(0, 16).replace('T', ' ') : '') + '</div>' +
-        '<div class="flex gap-2">' +
-        '<button onclick="showConnect(' + k.id + ')" class="nb-btn flex-1 !py-1.5 !text-xs !shadow-[3px_3px_0_#161616]">Cara Sambung</button>' +
-        '<button onclick="toggleKey(' + k.id + ')" class="nb-btn flex-1 !py-1.5 !text-xs !shadow-[3px_3px_0_#161616]">' + (k.is_active ? 'Nonaktifkan' : 'Aktifkan') + '</button>' +
-        '<button onclick="delKey(' + k.id + ')" class="nb-btn !py-1.5 !px-3 !text-xs !shadow-[3px_3px_0_#161616] !text-[#d92626]">Revoke</button>' +
-        '</div></div>';
+      var dotC = k.is_active ? '#16a34a' : '#999';
+      var pct = Math.round(k.total_requests / maxReq * 100);
+      var rows = '';
+      if (k.mode === 'worker' && k.worker) {
+        rows += infoRow('Worker', '<span class="font-extrabold">' + esc(k.worker.name) + '</span>');
+        rows += infoRow('Status worker', k.worker.is_online
+          ? '<span class="nb-badge nb-green"><span class="dot" style="background:#16a34a"></span>online</span>'
+          : '<span class="nb-badge" style="background:#E8E8E8"><span class="dot" style="background:#999"></span>offline</span>');
+      } else if (k.mode === 'provider' && k.provider_name) {
+        rows += infoRow('Provider', '<span class="font-extrabold">' + esc(k.provider_name) + '</span>');
+      }
+      rows += infoRow('Request', '<span class="font-extrabold">' + fmtNum(k.total_requests) + '</span>');
+      rows += infoRow('Token masuk', '<span class="font-extrabold">' + fmtNum(k.prompt_tokens) + '</span>');
+      rows += infoRow('Token keluar', '<span class="font-extrabold">' + fmtNum(k.completion_tokens) + '</span>');
+      rows += infoRow('Total token', '<span class="font-extrabold">' + fmtNum(k.total_tokens) + '</span>', true);
+      return '<div class="nb nb-sm p-4 md:p-5">' +
+        '<div class="flex items-center justify-between gap-2 mb-2">' +
+        '<div class="flex items-center gap-2 min-w-0"><span class="dot" style="background:' + dotC + ';width:10px;height:10px"></span>' +
+        '<span class="ab text-lg truncate">' + esc(k.name) + '</span></div>' + modeBadge + '</div>' +
+        '<div class="inline-block font-mono text-xs font-bold bg-[#F4F1F8] border-2 border-[#161616] rounded-lg px-2 py-1">' + esc(k.key_display) + '</div>' +
+        '<div class="mt-2">' + rows + '</div>' +
+        '<div class="h-3 mt-3 rounded-full border-2 border-[#161616] bg-[#EFEFEF] overflow-hidden"><div class="h-full bg-[#FFC93C]" style="width:' + pct + '%"></div></div>' +
+        '<div class="flex flex-wrap gap-2 mt-4">' +
+        '<button onclick="showConnect(' + k.id + ')" class="nb-btn nb-y !text-xs !shadow-[3px_3px_0_#161616]">Cara Sambung</button>' +
+        '<button onclick="toggleKey(' + k.id + ')" class="nb-btn !text-xs !shadow-[3px_3px_0_#161616]">' + (k.is_active ? 'Nonaktifkan' : 'Aktifkan') + '</button>' +
+        '<button onclick="delKey(' + k.id + ')" class="nb-btn !text-xs !shadow-[3px_3px_0_#161616] !text-[#d92626]">Hapus</button>' +
+        '</div>' +
+        '<div class="mt-3 text-[11px] font-semibold text-[#16161688]">dibuat ' + fmtDateID(k.created_at) + ' &middot; terakhir dipakai ' + relTime(k.last_used_at) + '</div>' +
+        '</div>';
     }).join('') : '<div class="nb nb-sm p-6 text-sm font-bold text-[#16161699] text-center">Belum ada key. Klik "+ Buat Key".</div>';
-    // stash for connect info
     window._keys = {}; list.forEach(function(k) { window._keys[k.id] = k; });
   }).catch(function(e) { toast(e.message); });
 }
