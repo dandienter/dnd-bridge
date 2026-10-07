@@ -1,0 +1,603 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8">
+<style>
+@page { size: A4; margin: 22mm 18mm; @bottom-center { content: counter(page); font-size: 9px; color: #888; } }
+body { font-family: sans-serif; font-size: 11pt; line-height: 1.55; color: #1a1a1a; }
+h1 { font-size: 22pt; border-bottom: 3px solid #2563eb; padding-bottom: 8px; margin-top: 0; }
+h2 { font-size: 15pt; color: #1e40af; margin-top: 26px; border-bottom: 1px solid #dbeafe; padding-bottom: 4px; }
+h3 { font-size: 12.5pt; color: #1e3a8a; }
+code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 10pt; }
+pre { background: #0f172a; color: #e2e8f0; padding: 12px 14px; border-radius: 8px; font-size: 9.5pt; overflow-x: auto; }
+pre code { background: none; color: inherit; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 10pt; }
+th, td { border: 1px solid #cbd5e1; padding: 7px 10px; text-align: left; }
+th { background: #eff6ff; color: #1e40af; }
+blockquote { border-left: 4px solid #2563eb; margin: 12px 0; padding: 8px 14px; background: #f8fafc; color: #334155; }
+.cover { text-align: center; padding: 120px 0 60px; }
+.cover h1 { border: none; font-size: 34pt; color: #1e40af; }
+.cover p { font-size: 13pt; color: #475569; }
+</style></head><body>
+<div class="cover"><h1>DND Bridge</h1>
+<p><b>Dokumentasi Lengkap — Panduan Penggunaan</b></p>
+<p>Jembatan API key AI: satu key <code>dnd-...</code> untuk banyak aplikasi</p>
+<p style="margin-top:40px">Oktober 2026</p></div>
+<h1 id="dokumentasi-lengkap-dnd-bridge">DOKUMENTASI LENGKAP - DND Bridge</h1>
+<p><em>Self-hosted AI API Key Bridge/Proxy — versi 1.0.0</em></p>
+<hr />
+<h2 id="daftar-isi">Daftar Isi</h2>
+<ol>
+<li><a href="#1-pengenalan">Pengenalan</a></li>
+<li><a href="#2-konsep--cara-kerja">Konsep &amp; Cara Kerja</a></li>
+<li><a href="#3-instalasi-lokal">Instalasi Lokal</a></li>
+<li><a href="#4-deploy-ke-production">Deploy ke Production</a></li>
+<li><a href="#5-panduan-penggunaan">Panduan Penggunaan</a></li>
+<li>5.1. Akun: Daftar &amp; Masuk</li>
+<li>5.2. Provider: Menyambungkan Provider AI</li>
+<li>5.3. Key Saya: Membuat &amp; Mengelola Key dnd-</li>
+<li>5.4. Cara Sambung ke Aplikasi AI</li>
+<li>5.5. Dashboard &amp; Statistik Pemakaian</li>
+<li>5.6. Worker Mode (Lengkap)</li>
+<li>5.7. Pengguna &amp; Keluar</li>
+<li><a href="#6-referensi-api">Referensi API</a></li>
+<li><a href="#7-keamanan">Keamanan</a></li>
+<li><a href="#8-troubleshooting">Troubleshooting</a></li>
+<li><a href="#9-faq">FAQ</a></li>
+</ol>
+<hr />
+<h2 id="1-pengenalan">1. Pengenalan</h2>
+<p><strong>DND Bridge</strong> adalah aplikasi self-hosted yang berfungsi sebagai jembatan (bridge/proxy) antara aplikasi AI di HP/komputermu dengan provider AI yang kamu pakai.</p>
+<p>Masalah yang diselesaikan: banyak aplikasi AI (misalnya aplikasi chat AI pihak ketiga) meminta kamu mengisi <em>custom endpoint</em> yang kompatibel dengan OpenAI API. Kalau kamu punya beberapa API key dari provider berbeda, atau ingin memisahkan pemakaian per aplikasi sekaligus memantau siapa memakai berapa, DND Bridge memberi satu pintu terpusat:</p>
+<ul>
+<li>Kamu mendaftarkan API key provider AI milikmu <strong>sekali</strong> di dashboard.</li>
+<li>DND Bridge menerbitkan key <strong><code>dnd-...</code></strong> yang terikat ke provider (atau ke worker).</li>
+<li>Aplikasi AI-mu cukup diisi Base URL <code>https://&lt;host-kamu&gt;/v1</code> + key <code>dnd-...</code>, lalu dipakai seperti endpoint OpenAI biasa.</li>
+<li>Semua request tercatat: jumlah request dan token per key, plus grafik harian.</li>
+</ul>
+<h3 id="fitur-utama">Fitur utama</h3>
+<table>
+<thead>
+<tr>
+<th>Fitur</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Proxy OpenAI-compatible</td>
+<td><code>POST /v1/chat/completions</code>, <code>POST /v1/completions</code>, <code>GET /v1/models</code>, streaming SSE</td>
+</tr>
+<tr>
+<td>Key dnd-</td>
+<td>Format <code>dnd-</code> + token acak, tampil sekali, bisa revoke/nonaktifkan</td>
+</tr>
+<tr>
+<td>Validasi provider</td>
+<td><code>GET {base_url}/models</code> dipanggil otomatis saat provider disimpan</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td>Kartu statistik, grafik 14 hari, rincian per key</td>
+</tr>
+<tr>
+<td>Worker mode</td>
+<td>Akun AI pribadimu menjawab request via job queue</td>
+</tr>
+<tr>
+<td>Rate limit</td>
+<td>60 request/menit per key (HTTP 429 jika lewat)</td>
+</tr>
+<tr>
+<td>Dark/light mode</td>
+<td>Toggle tema, tersimpan di browser</td>
+</tr>
+<tr>
+<td>Responsif</td>
+<td>Sidebar di desktop, bottom navigation di HP</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-konsep-cara-kerja">2. Konsep &amp; Cara Kerja</h2>
+<pre><code>[Aplikasi AI di HP] --(Base URL: https://host/v1, Key: dnd-...)--&gt; [DND Bridge]
+                                                                        |
+                                    +-------------------+-----------------+
+                                    |                                     |
+                              mode=provider                          mode=worker
+                                    |                                     |
+                          [Provider AI milikmu]                    [Job Queue]
+                          (OpenAI / OpenRouter /                    |
+                           dll, OpenAI-compatible)            [Worker AI pribadimu]
+                                                                     polling tiap 5 mnt
+</code></pre>
+<ol>
+<li><strong>Mode provider</strong>: DND Bridge meneruskan request ke <code>base_url</code> provider dengan API key provider yang tersimpan di server. Respons (termasuk streaming) diteruskan apa adanya ke aplikasi. Token usage dicatat dari field <code>usage</code> respons provider.</li>
+<li><strong>Mode worker</strong>: request tidak diteruskan ke provider. DND Bridge membuat <em>job</em> berisi <code>model</code> + <code>messages</code>, lalu menunggu (maksimal 55 detik) sampai worker milikmu mengambil dan menjawabnya. Jawaban dikembalikan dalam format chat completion standar OpenAI.</li>
+</ol>
+<p><strong>Yang tidak pernah terjadi</strong>: API key provider aslimu tidak pernah dikirim ke browser atau ke aplikasi klien. Klien hanya memegang key <code>dnd-...</code>.</p>
+<hr />
+<h2 id="3-instalasi-lokal">3. Instalasi Lokal</h2>
+<h3 id="syarat">Syarat</h3>
+<ul>
+<li>Python 3.11+</li>
+<li>pip</li>
+</ul>
+<h3 id="langkah">Langkah</h3>
+<pre><code class="language-bash">cd dnd-bridge
+
+# 1. Buat virtual environment (disarankan)
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+
+# 2. Install dependensi
+pip install -r backend/requirements.txt
+
+# 3. (Opsional tapi disarankan) set JWT secret
+export JWT_SECRET=&quot;ganti-dengan-string-acak-minimal-32-karakter&quot;
+
+# 4. Jalankan
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+</code></pre>
+<p>Buka:</p>
+<ul>
+<li>Landing: http://localhost:8000/</li>
+<li>Dashboard: http://localhost:8000/app</li>
+<li>Health check: http://localhost:8000/api/health</li>
+</ul>
+<p>Database SQLite dibuat otomatis di <code>backend/data/dnd_bridge.db</code> saat pertama dijalankan.</p>
+<h3 id="variabel-environment">Variabel environment</h3>
+<table>
+<thead>
+<tr>
+<th>Variabel</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JWT_SECRET</code></td>
+<td><code>dev-secret-change-me</code></td>
+<td>Secret penanda tangan JWT. <strong>Wajib diganti di production</strong> (ada warning di log jika memakai default)</td>
+</tr>
+<tr>
+<td><code>PORT</code></td>
+<td><code>8000</code></td>
+<td>Port HTTP (dipakai Dockerfile)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-deploy-ke-production">4. Deploy ke Production</h2>
+<h3 id="41-railway">4.1. Railway</h3>
+<ol>
+<li>Push repo ini ke GitHub.</li>
+<li>Di Railway: New Project -&gt; Deploy from GitHub -&gt; pilih repo.</li>
+<li>Railway otomatis mendeteksi <code>Dockerfile</code>.</li>
+<li>Tambahkan variable: <code>JWT_SECRET</code> = string acak panjang (gunakan <code>openssl rand -hex 32</code>).</li>
+<li>(Disarankan) Tambahkan Volume dan mount ke <code>/app/backend/data</code> agar database SQLite tidak hilang saat redeploy.</li>
+<li>Railway memberi domain publik, mis. <code>https://dnd-bridge-production.up.railway.app</code>. Itulah host yang dipakai sebagai Base URL (<code>https://&lt;domain&gt;/v1</code>).</li>
+</ol>
+<h3 id="42-koyeb">4.2. Koyeb</h3>
+<ol>
+<li>Push ke GitHub, buat service dari repo dengan builder Dockerfile.</li>
+<li>Port: <code>8000</code>, health check path: <code>/api/health</code>.</li>
+<li>Set env <code>JWT_SECRET</code>.</li>
+<li>Untuk persistensi, gunakan Koyeb Volumes yang di-mount ke <code>/app/backend/data</code> (atau terima risiko data hilang saat redeploy).</li>
+</ol>
+<h3 id="43-vps-docker">4.3. VPS (Docker)</h3>
+<pre><code class="language-bash">docker build -t dnd-bridge .
+docker run -d --name dnd-bridge -p 8000:8000 \
+  -e JWT_SECRET=&quot;isi-string-acak-panjang&quot; \
+  -v dnd-data:/app/backend/data \
+  --restart unless-stopped \
+  dnd-bridge
+</code></pre>
+<p>Tambahkan reverse proxy (Nginx/Caddy) + HTTPS di depan untuk production yang sesungguhnya.</p>
+<h3 id="44-vps-tanpa-docker">4.4. VPS (tanpa Docker)</h3>
+<pre><code class="language-bash">pip install -r backend/requirements.txt
+JWT_SECRET=&quot;...&quot; nohup uvicorn backend.main:app --host 0.0.0.0 --port 8000 &amp;
+</code></pre>
+<p>Gunakan systemd untuk auto-start (contoh unit file bisa dibuat mengikuti pola service lain di servermu).</p>
+<hr />
+<h2 id="5-panduan-penggunaan">5. Panduan Penggunaan</h2>
+<h3 id="51-akun-daftar-masuk">5.1. Akun: Daftar &amp; Masuk</h3>
+<ol>
+<li>Buka <code>/app</code>.</li>
+<li>Pilih tab <strong>Daftar</strong>, isi username (min. 3 karakter) dan password (min. 6 karakter), klik <strong>Daftar</strong>.</li>
+<li>Kamu langsung masuk dan mendapat token JWT (tersimpan di <code>localStorage</code>, berlaku 7 hari).</li>
+<li>Untuk masuk kembali, gunakan tab <strong>Masuk</strong>.</li>
+</ol>
+<p>Semua data (provider, key, worker, log) terisolasi per akun.</p>
+<h3 id="52-provider-menyambungkan-provider-ai">5.2. Provider: Menyambungkan Provider AI</h3>
+<p>Buka tab <strong>Provider</strong> -&gt; isi form <strong>Tambah Provider</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Contoh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama</td>
+<td><code>OpenAI</code>, <code>OpenRouter</code></td>
+</tr>
+<tr>
+<td>Base URL</td>
+<td><code>https://api.openai.com/v1</code> (tanpa trailing slash, otomatis dinormalisasi)</td>
+</tr>
+<tr>
+<td>API Key Provider</td>
+<td><code>sk-...</code> milikmu</td>
+</tr>
+</tbody>
+</table>
+<p>Klik <strong>Simpan &amp; Validasi</strong>. DND Bridge akan memanggil <code>GET {base_url}/models</code> dengan header <code>Authorization: Bearer &lt;api-key&gt;</code> (timeout 5 detik):</p>
+<ul>
+<li>Berhasil -&gt; provider tersimpan, tampil di daftar dengan API key tersamar (<code>••••1234</code>).</li>
+<li>Gagal -&gt; pesan error yang jelas, mis. <em>"API key ditolak provider (401 Unauthorized)"</em>, <em>"Timeout: provider tidak merespons dalam 5 detik"</em>, <em>"Tidak bisa terhubung ke base_url provider"</em>.</li>
+</ul>
+<p>Provider tidak bisa dihapus selama masih ada key yang memakainya (hapus/nonaktifkan key-nya dulu).</p>
+<h3 id="53-key-saya-membuat-mengelola-key-dnd-">5.3. Key Saya: Membuat &amp; Mengelola Key dnd-</h3>
+<p>Buka tab <strong>Key Saya</strong> -&gt; <strong>+ Buat Key</strong>:</p>
+<ol>
+<li><strong>Nama Key</strong>: mis. <code>key-hp</code>, <code>key-laptop</code> (untuk membedakan pemakaian per perangkat/aplikasi).</li>
+<li><strong>Mode</strong>:</li>
+<li><em>Provider</em>: teruskan ke provider AI. Wajib pilih provider.</li>
+<li><em>Worker</em>: dijawab worker AI milikmu (lihat 5.6).</li>
+<li>Klik <strong>Buat</strong>.</li>
+</ol>
+<p>Modal sukses menampilkan:</p>
+<ul>
+<li><strong>Key asli</strong> (<code>dnd-...</code>) — tampil <strong>sekali saja</strong>, segera salin. Yang disimpan server hanya hash SHA256-nya.</li>
+<li><strong>Kotak "Cara Sambung"</strong>: Base URL + key, siap salin.</li>
+</ul>
+<p>Di daftar key kamu bisa:</p>
+<ul>
+<li><strong>Cara Sambung</strong>: melihat kembali Base URL (key asli tidak bisa dilihat lagi).</li>
+<li><strong>Nonaktifkan/Aktifkan</strong>: key nonaktif langsung ditolak (401).</li>
+<li><strong>Revoke</strong>: hapus permanen.</li>
+</ul>
+<h3 id="54-cara-sambung-ke-aplikasi-ai">5.4. Cara Sambung ke Aplikasi AI</h3>
+<p>Di aplikasi AI yang mendukung <em>custom endpoint / OpenAI-compatible</em>:</p>
+<ul>
+<li><strong>Base URL</strong>: <code>https://&lt;host-kamu&gt;/v1</code> (contoh: <code>https://dnd-bridge-production.up.railway.app/v1</code>)</li>
+<li><strong>API Key</strong>: key <code>dnd-...</code> milikmu</li>
+<li><strong>Model</strong>: isi sesuai model yang tersedia di providermu (cek via <code>GET /v1/models</code> atau daftar provider)</li>
+</ul>
+<p>Lalu pakai seperti biasa. Contoh dengan curl:</p>
+<pre><code class="language-bash">curl https://&lt;host-kamu&gt;/v1/chat/completions \
+  -H &quot;Authorization: Bearer dnd-xxxx&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;Halo&quot;}]}'
+</code></pre>
+<p>Contoh Python (openai lib):</p>
+<pre><code class="language-python">from openai import OpenAI
+client = OpenAI(base_url=&quot;https://&lt;host-kamu&gt;/v1&quot;, api_key=&quot;dnd-xxxx&quot;)
+resp = client.chat.completions.create(
+    model=&quot;gpt-4o-mini&quot;,
+    messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Halo&quot;}],
+)
+print(resp.choices[0].message.content)
+</code></pre>
+<h3 id="55-dashboard-statistik-pemakaian">5.5. Dashboard &amp; Statistik Pemakaian</h3>
+<p>Tab <strong>Dashboard</strong> menampilkan:</p>
+<ul>
+<li><strong>Total Key</strong>, <strong>Request Hari Ini</strong>, <strong>Token Hari Ini</strong> (token = prompt + completion).</li>
+<li><strong>Grafik 14 hari terakhir</strong>: batang jumlah request per hari (hover untuk detail).</li>
+<li><strong>Pemakaian per key</strong>: total request &amp; token tiap key.</li>
+</ul>
+<p>Catatan: untuk request <strong>streaming</strong>, jumlah token dicatat 0 (token hanya bisa dihitung dari respons non-streaming yang memuat field <code>usage</code>), tapi request-nya tetap tercatat.</p>
+<h3 id="56-worker-mode-lengkap">5.6. Worker Mode (Lengkap)</h3>
+<p>Worker mode memungkinkan <strong>akun AI pribadimu</strong> (misalnya akun ChatGPT/Claude/Gemini yang kamu beri instruksi khusus) menjadi "otak" di balik sebuah key.</p>
+<h4 id="langkah-1-buat-worker">Langkah 1: Buat worker</h4>
+<p>Tab <strong>Worker Saya</strong> -&gt; <strong>+ Buat Worker</strong> -&gt; isi nama -&gt; <strong>Buat</strong>. Kamu dapat:</p>
+<ul>
+<li><strong>Token worker</strong> (<code>dndw-...</code>): tampil sekali, segera salin.</li>
+<li><strong>Instruksi siap salin</strong>: teks instruksi untuk ditempel ke akun AI-mu.</li>
+</ul>
+<h4 id="langkah-2-tempel-instruksi-ke-akun-ai-mu">Langkah 2: Tempel instruksi ke akun AI-mu</h4>
+<p>Salin instruksi dari modal dan tempel ke akun AI milikmu (sebagai system prompt / instruksi kustom, tergantung platform AI-nya). Isi instruksi intinya:</p>
+<ol>
+<li>Setiap 5 menit: <code>POST {host}/api/worker/ping</code> dengan header <code>Authorization: Bearer &lt;token-worker&gt;</code>.</li>
+<li>Kalau <code>pending_jobs &gt; 0</code>: <code>GET {host}/api/worker/jobs/next</code> (header sama) untuk mengambil job tertua <code>{id, model, messages}</code>.</li>
+<li>Jawab isi <code>messages</code>, lalu <code>POST {host}/api/worker/jobs/{id}/answer</code> dengan body <code>{"text": "jawaban"}</code>.</li>
+<li>Ulangi sampai tidak ada job (HTTP 204).</li>
+</ol>
+<p>Status worker tampil <strong>online</strong> jika ia ping dalam 10 menit terakhir, beserta waktu terakhir terlihat.</p>
+<h4 id="langkah-3-buat-key-mode-worker">Langkah 3: Buat key mode worker</h4>
+<p>Tab <strong>Key Saya</strong> -&gt; <strong>+ Buat Key</strong> -&gt; mode <strong>Worker</strong>. Key ini dipakai di aplikasi AI seperti biasa (Base URL + key <code>dnd-...</code>).</p>
+<h4 id="alur-request-worker">Alur request worker</h4>
+<ol>
+<li>Aplikasi memanggil <code>POST /v1/chat/completions</code> dengan key worker.</li>
+<li>DND Bridge membuat job (<code>pending</code>) berisi model + messages.</li>
+<li>Worker mengambil job (<code>claimed</code>), menjawab (<code>done</code>).</li>
+<li>DND Bridge mengembalikan respons format chat completion OpenAI standar berisi teks jawaban worker.</li>
+<li>Jika tidak ada worker yang menjawab dalam <strong>55 detik</strong>: HTTP 504 dengan pesan jelas.</li>
+</ol>
+<p>Batasan: worker mode hanya mendukung <code>/v1/chat/completions</code> (bukan <code>/v1/completions</code> maupun streaming).</p>
+<h4 id="endpoint-worker-untuk-implementasi-worker-manualbot">Endpoint worker (untuk implementasi worker manual/bot)</h4>
+<table>
+<thead>
+<tr>
+<th>Method &amp; Path</th>
+<th>Auth</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/worker/ping</code></td>
+<td>Bearer token worker</td>
+<td>Update last_seen, balas <code>{ok, pending_jobs}</code></td>
+</tr>
+<tr>
+<td><code>GET /api/worker/jobs/next</code></td>
+<td>Bearer token worker</td>
+<td>Ambil job tertua, tandai claimed; 204 jika kosong</td>
+</tr>
+<tr>
+<td><code>POST /api/worker/jobs/{id}/answer</code></td>
+<td>Bearer token worker</td>
+<td>Body <code>{"text": "..."}</code>, tandai done</td>
+</tr>
+</tbody>
+</table>
+<h3 id="57-pengguna-keluar">5.7. Pengguna &amp; Keluar</h3>
+<p>Tab <strong>Pengguna</strong> menampilkan username, tanggal bergabung, Base URL endpoint milikmu, dan tombol <strong>Keluar</strong> (menghapus token dari browser).</p>
+<hr />
+<h2 id="6-referensi-api">6. Referensi API</h2>
+<p>Semua endpoint <code>/api/*</code> (kecuali register/login/health) butuh header <code>Authorization: Bearer &lt;jwt&gt;</code>. Endpoint <code>/v1/*</code> butuh <code>Authorization: Bearer dnd-...</code>.</p>
+<h3 id="auth">Auth</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Body</th>
+<th>Respon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/api/auth/register</code></td>
+<td><code>{username, password}</code></td>
+<td><code>{token, username}</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/auth/login</code></td>
+<td><code>{username, password}</code></td>
+<td><code>{token, username}</code></td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/auth/me</code></td>
+<td>-</td>
+<td><code>{id, username, created_at}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="provider">Provider</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Body</th>
+<th>Respon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/providers</code></td>
+<td>-</td>
+<td>list (api_key tersamar)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/providers</code></td>
+<td><code>{name, base_url, api_key}</code></td>
+<td><code>{id, name, base_url}</code> / 400</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/providers/{id}</code></td>
+<td>-</td>
+<td><code>{ok}</code> / 400 jika dipakai key</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key">Key</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Body</th>
+<th>Respon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/keys</code></td>
+<td>-</td>
+<td>list + ringkasan pemakaian</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/keys</code></td>
+<td><code>{name, mode, provider_id?}</code></td>
+<td><code>{id, name, mode, key, key_prefix}</code> (key tampil sekali)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/keys/{id}/toggle</code></td>
+<td>-</td>
+<td><code>{ok, is_active}</code></td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/keys/{id}</code></td>
+<td>-</td>
+<td><code>{ok}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="proxy-openai-compatible">Proxy (OpenAI-compatible)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Auth</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/v1/models</code></td>
+<td><code>dnd-</code> key</td>
+<td>Diteruskan ke provider; key worker dapat daftar sintetis</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/chat/completions</code></td>
+<td><code>dnd-</code> key</td>
+<td>Non-streaming &amp; SSE streaming; worker mode = antre job</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/completions</code></td>
+<td><code>dnd-</code> key</td>
+<td>Legacy completions (provider saja)</td>
+</tr>
+</tbody>
+</table>
+<p>Error umum: <code>401</code> key salah/nonaktif, <code>429</code> rate limit (60/mnt), <code>502</code> provider error, <code>504</code> worker timeout.</p>
+<h3 id="usage">Usage</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Respon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/usage/summary</code></td>
+<td><code>{per_key: [...], per_day: [...]}</code> (14 hari)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="worker-milik-user-auth-jwt">Worker (milik user, auth JWT)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Respon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/workers</code></td>
+<td>list + status online</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/workers</code></td>
+<td><code>{id, name, token, token_prefix}</code> (token tampil sekali)</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/workers/{id}</code></td>
+<td><code>{ok}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="worker-agent-auth-token-worker">Worker agent (auth token worker)</h3>
+<p>Lihat tabel di 5.6.</p>
+<hr />
+<h2 id="7-keamanan">7. Keamanan</h2>
+<ol>
+<li><strong>Key <code>dnd-...</code> asli hanya tampil sekali</strong> saat dibuat. Server menyimpan hash SHA256, bukan key-nya.</li>
+<li><strong>API key provider tidak pernah ke browser</strong>: endpoint list hanya mengembalikan 4 karakter terakhir tersamar.</li>
+<li><strong>Password</strong> di-hash dengan bcrypt.</li>
+<li><strong>JWT</strong> berlaku 7 hari; set <code>JWT_SECRET</code> yang kuat di production. Jangan pakai default.</li>
+<li><strong>Rate limit</strong> 60 req/menit per key mencegah abuse.</li>
+<li><strong>Self-hosted = kamu yang dipercaya</strong>: API key provider tersimpan plaintext di database serverMU. Amankan servermu (HTTPS, akses terbatas, backup). Jangan commit folder <code>backend/data/</code>.</li>
+<li>Selalu gunakan <strong>HTTPS</strong> di production (Railway/Koyeb/VPS + reverse proxy menyediakan ini).</li>
+</ol>
+<hr />
+<h2 id="8-troubleshooting">8. Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Penyebab umum &amp; solusi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>401 Invalid API key</code> di <code>/v1/*</code></td>
+<td>Key salah ketik, key di-revoke, atau key dinonaktifkan. Buat key baru / aktifkan lagi.</td>
+</tr>
+<tr>
+<td><code>401</code> di <code>/api/*</code></td>
+<td>Token JWT kedaluwarsa (7 hari). Masuk lagi.</td>
+</tr>
+<tr>
+<td><code>429 Rate limit exceeded</code></td>
+<td>Lebih dari 60 req/menit pada satu key. Kurangi frekuensi / pakai key terpisah.</td>
+</tr>
+<tr>
+<td><code>502 Provider error</code></td>
+<td>Provider down / base_url salah / API key provider invalid. Cek tab Provider, hapus lalu tambah ulang.</td>
+</tr>
+<tr>
+<td><code>504</code> pada key worker</td>
+<td>Tidak ada worker online yang menjawab dalam 55 detik. Pastikan worker ping rutin dan token benar.</td>
+</tr>
+<tr>
+<td>Tambah provider gagal validasi</td>
+<td>Pastikan base_url benar (tanpa path ganda <code>/v1/v1</code>), API key valid, dan server bisa menjangkau internet.</td>
+</tr>
+<tr>
+<td>Data hilang setelah redeploy</td>
+<td>Database SQLite ada di container/volume ephemeral. Pasang volume ke <code>/app/backend/data</code>.</td>
+</tr>
+<tr>
+<td>Warning JWT_SECRET di log</td>
+<td>Set env <code>JWT_SECRET</code> dengan string acak panjang, lalu restart.</td>
+</tr>
+<tr>
+<td>Halaman <code>/app</code> blank</td>
+<td>Pastikan <code>backend/static/</code> ikut ter-copy saat deploy (Dockerfile sudah melakukannya). Cek console browser.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-faq">9. FAQ</h2>
+<p><strong>Apakah DND Bridge menyimpan isi chat saya?</strong>
+Request dicatat sebagai metadata (waktu, model, jumlah token, status, latensi) per key. Isi <code>messages</code> TIDAK disimpan untuk mode provider. Untuk mode worker, isi messages disimpan sementara sebagai job sampai dijawab, lalu bisa dihapus manual dari database jika perlu.</p>
+<p><strong>Provider apa saja yang didukung?</strong>
+Semua yang kompatibel dengan OpenAI API (<code>/v1/models</code>, <code>/v1/chat/completions</code>): OpenAI, OpenRouter, DeepSeek, Together, Groq, Ollama (via tunnel), LiteLLM, dan lain-lain.</p>
+<p><strong>Berapa banyak key yang bisa dibuat?</strong>
+Tidak dibatasi. Disarankan satu key per aplikasi/perangkat agar statistik pemakaian bermakna.</p>
+<p><strong>Apakah streaming didukung?</strong>
+Ya, <code>stream: true</code> pada <code>/v1/chat/completions</code> diteruskan sebagai SSE. Token usage untuk streaming dicatat 0 (keterbatasan teknis).</p>
+<p><strong>Bisakah dipakai rame-rame satu server?</strong>
+Bisa. Tiap user daftar akun sendiri; data terisolasi per user. Untuk publik, pertimbangkan rate limit dan monitoring.</p>
+<p><strong>Bagaimana cara rotate key yang bocor?</strong>
+Tab Key Saya -&gt; <strong>Revoke</strong> key lama -&gt; <strong>+ Buat Key</strong> baru -&gt; update aplikasi yang memakai key lama.</p>
+<p><strong>Apakah worker bisa lebih dari satu per user?</strong>
+Bisa. Job diambil berdasarkan urutan tertua oleh worker mana pun milik user tersebut.</p>
+<hr />
+<p><em>Dokumentasi ini menyertai DND Bridge v1.0.0. Dibuat Oktober 2026.</em></p></body></html>
