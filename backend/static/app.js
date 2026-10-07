@@ -7,10 +7,6 @@ function bridgeBase() {
 var token = localStorage.getItem('dnd-token') || '';
 var providersCache = [];
 
-function toggleTheme() {
-  var d = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('dnd-theme', d ? 'dark' : 'light');
-}
 function toast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg; t.classList.remove('hidden');
@@ -50,9 +46,8 @@ function esc(s) {
 var mode = 'login';
 function authMode(m) {
   mode = m;
-  var on = 'bg-white dark:bg-gray-900 shadow text-gray-900 dark:text-white';
-  document.getElementById('tabLogin').className = 'flex-1 py-2 rounded-lg text-sm font-bold ' + (m === 'login' ? on : 'text-gray-500 dark:text-gray-400');
-  document.getElementById('tabRegister').className = 'flex-1 py-2 rounded-lg text-sm font-bold ' + (m === 'register' ? on : 'text-gray-500 dark:text-gray-400');
+  document.getElementById('tabLogin').className = 'seg-btn' + (m === 'login' ? ' on' : '');
+  document.getElementById('tabRegister').className = 'seg-btn' + (m === 'register' ? ' on' : '');
   document.getElementById('authBtn').textContent = m === 'login' ? 'Masuk' : 'Daftar';
   hideAuthError();
 }
@@ -96,10 +91,10 @@ function svgIcon(paths, size) {
 }
 function buildNav() {
   document.getElementById('sideNav').innerHTML = TABS.map(function(t) {
-    return '<button class="navbtn" data-tab="' + t.id + '" onclick="showTab(\'' + t.id + '\')">' + svgIcon(t.icon, 18) + '<span>' + t.label + '</span></button>';
+    return '<button class="nb-navbtn" data-tab="' + t.id + '" onclick="showTab(\'' + t.id + '\')">' + svgIcon(t.icon, 18) + '<span>' + t.label + '</span></button>';
   }).join('');
   document.getElementById('mobileNav').innerHTML = TABS.map(function(t) {
-    return '<button class="mnavbtn" data-tab="' + t.id + '" onclick="showTab(\'' + t.id + '\')">' + svgIcon(t.icon, 20) + '<span>' + t.label + '</span></button>';
+    return '<button class="nb-mnavbtn" data-tab="' + t.id + '" onclick="showTab(\'' + t.id + '\')">' + svgIcon(t.icon, 20) + '<span>' + t.label + '</span></button>';
   }).join('');
 }
 function showTab(id) {
@@ -136,18 +131,19 @@ function loadDashboard() {
     document.getElementById('stTok').textContent = fmtNum(td.tokens);
     // chart
     var max = Math.max.apply(null, sum.per_day.map(function(d) { return d.requests; }).concat([1]));
-    document.getElementById('chart').innerHTML = sum.per_day.map(function(d) {
+    document.getElementById('chart').innerHTML = sum.per_day.map(function(d, i) {
       var h = Math.round((d.requests / max) * 100);
-      return '<div class="flex-1 rounded-t-md grad" style="height:' + Math.max(h, 3) + '%" title="' + d.date + ': ' + d.requests + ' req"></div>';
+      var c = i % 2 ? '#7DD3FC' : '#FFC93C';
+      return '<div class="flex-1 bar" style="height:' + Math.max(h, 3) + '%;background:' + c + '" title="' + d.date + ': ' + d.requests + ' req"></div>';
     }).join('');
     document.getElementById('chartLabels').innerHTML = sum.per_day.map(function(d, i) {
       return '<div class="flex-1 text-center">' + (i % 2 === 0 ? d.date.slice(8) : '') + '</div>';
     }).join('');
     document.getElementById('perKey').innerHTML = sum.per_key.length ? sum.per_key.map(function(k) {
-      return '<div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">' +
-        '<div><div class="font-bold text-sm">' + esc(k.name) + '</div><div class="font-mono text-xs text-gray-500">' + esc(k.key_prefix) + '....</div></div>' +
-        '<div class="text-right text-xs"><div class="font-bold">' + fmtNum(k.requests) + ' req</div><div class="text-gray-500">' + fmtNum(k.prompt_tokens + k.completion_tokens) + ' tok</div></div></div>';
-    }).join('') : '<p class="text-sm text-gray-500">Belum ada key. Buat key pertamamu di tab Key Saya.</p>';
+      return '<div class="flex items-center justify-between py-2.5 border-b-[3px] border-[#161616] last:border-0">' +
+        '<div><div class="font-extrabold text-sm">' + esc(k.name) + '</div><div class="font-mono text-xs font-bold text-[#16161699]">' + esc(k.key_prefix) + '....</div></div>' +
+        '<div class="text-right text-xs"><div class="font-extrabold">' + fmtNum(k.requests) + ' req</div><div class="font-bold text-[#16161699]">' + fmtNum(k.prompt_tokens + k.completion_tokens) + ' tok</div></div></div>';
+    }).join('') : '<p class="text-sm font-semibold text-[#16161699]">Belum ada key. Buat key pertamamu di tab Key Saya.</p>';
   }).catch(function(e) { toast(e.message); });
 }
 
@@ -156,12 +152,12 @@ function loadProviders() {
   api('/api/providers').then(function(list) {
     providersCache = list;
     document.getElementById('provList').innerHTML = list.length ? list.map(function(p) {
-      return '<div class="card rounded-2xl p-4 flex items-center justify-between gap-3">' +
-        '<div class="min-w-0"><div class="font-bold truncate">' + esc(p.name) + '</div>' +
-        '<div class="font-mono text-xs text-gray-500 truncate">' + esc(p.base_url) + '</div>' +
-        '<div class="font-mono text-xs text-gray-400">key: ' + esc(p.api_key_masked) + '</div></div>' +
-        '<button onclick="delProvider(' + p.id + ')" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">Hapus</button></div>';
-    }).join('') : '<div class="card rounded-2xl p-6 text-sm text-gray-500 text-center">Belum ada provider. Tambahkan provider AI-mu di atas.</div>';
+      return '<div class="nb nb-sm p-4 flex items-center justify-between gap-3">' +
+        '<div class="min-w-0"><div class="font-extrabold truncate">' + esc(p.name) + '</div>' +
+        '<div class="font-mono text-xs font-bold text-[#16161699] truncate">' + esc(p.base_url) + '</div>' +
+        '<div class="font-mono text-xs font-bold text-[#16161666]">key: ' + esc(p.api_key_masked) + '</div></div>' +
+        '<button onclick="delProvider(' + p.id + ')" class="nb-btn !py-1.5 !px-3 !text-xs !shadow-[3px_3px_0_#161616] shrink-0 !text-[#d92626]">Hapus</button></div>';
+    }).join('') : '<div class="nb nb-sm p-6 text-sm font-bold text-[#16161699] text-center">Belum ada provider. Tambahkan provider AI-mu di atas.</div>';
   }).catch(function(e) { toast(e.message); });
 }
 function addProvider() {
@@ -230,25 +226,25 @@ function loadKeys() {
   api('/api/keys').then(function(list) {
     document.getElementById('keyList').innerHTML = list.length ? list.map(function(k) {
       var modeBadge = k.mode === 'worker'
-        ? '<span class="badge bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">worker</span>'
-        : '<span class="badge bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">provider</span>';
+        ? '<span class="nb-badge nb-purple">worker</span>'
+        : '<span class="nb-badge nb-blue">provider</span>';
       var stBadge = k.is_active
-        ? '<span class="badge bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"><span class="dot bg-green-500"></span>aktif</span>'
-        : '<span class="badge bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"><span class="dot bg-gray-400"></span>nonaktif</span>';
-      return '<div class="card rounded-2xl p-4">' +
-        '<div class="flex items-center justify-between gap-2 mb-2"><div class="font-bold truncate">' + esc(k.name) + '</div>' +
-        '<div class="flex gap-1 shrink-0">' + modeBadge + stBadge + '</div></div>' +
-        '<div class="font-mono text-xs text-gray-500 mb-1">' + esc(k.key_display) + '</div>' +
-        '<div class="text-xs text-gray-500 dark:text-gray-400 mb-3">' +
+        ? '<span class="nb-badge nb-green"><span class="dot" style="background:#16a34a"></span>aktif</span>'
+        : '<span class="nb-badge" style="background:#E8E8E8"><span class="dot" style="background:#999"></span>nonaktif</span>';
+      return '<div class="nb nb-sm p-4">' +
+        '<div class="flex items-center justify-between gap-2 mb-2"><div class="font-extrabold truncate">' + esc(k.name) + '</div>' +
+        '<div class="flex gap-1.5 shrink-0">' + modeBadge + stBadge + '</div></div>' +
+        '<div class="font-mono text-xs font-bold text-[#16161699] mb-1">' + esc(k.key_display) + '</div>' +
+        '<div class="text-xs font-semibold text-[#16161699] mb-3">' +
         (k.provider_name ? 'Provider: ' + esc(k.provider_name) + ' &middot; ' : '') +
         k.total_requests + ' request &middot; ' + fmtNum(k.total_tokens) + ' token' +
         (k.last_used_at ? ' &middot; terakhir: ' + k.last_used_at.slice(0, 16).replace('T', ' ') : '') + '</div>' +
         '<div class="flex gap-2">' +
-        '<button onclick="showConnect(' + k.id + ')" class="flex-1 py-1.5 rounded-lg text-xs font-bold border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">Cara Sambung</button>' +
-        '<button onclick="toggleKey(' + k.id + ')" class="flex-1 py-1.5 rounded-lg text-xs font-bold border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">' + (k.is_active ? 'Nonaktifkan' : 'Aktifkan') + '</button>' +
-        '<button onclick="delKey(' + k.id + ')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">Revoke</button>' +
+        '<button onclick="showConnect(' + k.id + ')" class="nb-btn flex-1 !py-1.5 !text-xs !shadow-[3px_3px_0_#161616]">Cara Sambung</button>' +
+        '<button onclick="toggleKey(' + k.id + ')" class="nb-btn flex-1 !py-1.5 !text-xs !shadow-[3px_3px_0_#161616]">' + (k.is_active ? 'Nonaktifkan' : 'Aktifkan') + '</button>' +
+        '<button onclick="delKey(' + k.id + ')" class="nb-btn !py-1.5 !px-3 !text-xs !shadow-[3px_3px_0_#161616] !text-[#d92626]">Revoke</button>' +
         '</div></div>';
-    }).join('') : '<div class="card rounded-2xl p-6 text-sm text-gray-500 text-center">Belum ada key. Klik "+ Buat Key".</div>';
+    }).join('') : '<div class="nb nb-sm p-6 text-sm font-bold text-[#16161699] text-center">Belum ada key. Klik "+ Buat Key".</div>';
     // stash for connect info
     window._keys = {}; list.forEach(function(k) { window._keys[k.id] = k; });
   }).catch(function(e) { toast(e.message); });
@@ -288,12 +284,12 @@ function createWorker() {
 function workerInstruction(wtoken) {
   return 'Kamu adalah worker AI untuk DND Bridge. Tugasmu: menjawab request user secara otomatis.\n\n' +
     'ATURAN:\n' +
-    '1. Setiap 5 menit, panggil: POST ' + location.origin + '/api/worker/ping\n' +
+    '1. Setiap 5 menit, panggil: POST ' + bridgeBase() + '/api/worker/ping\n' +
     '   Header: Authorization: Bearer ' + wtoken + '\n' +
-    '2. Jika ada pending_jobs > 0, panggil: GET ' + location.origin + '/api/worker/jobs/next\n' +
+    '2. Jika ada pending_jobs > 0, panggil: GET ' + bridgeBase() + '/api/worker/jobs/next\n' +
     '   (header sama). Kamu akan menerima {id, model, messages}.\n' +
     '3. Jawab pertanyaan user dari messages tersebut, lalu kirim jawaban:\n' +
-    '   POST ' + location.origin + '/api/worker/jobs/{id}/answer\n' +
+    '   POST ' + bridgeBase() + '/api/worker/jobs/{id}/answer\n' +
     '   Header: Authorization: Bearer ' + wtoken + '\n' +
     '   Body JSON: {"text": "jawabanmu di sini"}\n' +
     '4. Ulangi langkah 2-3 sampai tidak ada job (HTTP 204).\n\n' +
@@ -303,15 +299,15 @@ function loadWorkers() {
   api('/api/workers').then(function(list) {
     document.getElementById('workerList').innerHTML = list.length ? list.map(function(w) {
       var b = w.is_online
-        ? '<span class="badge bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"><span class="dot bg-green-500"></span>online</span>'
-        : '<span class="badge bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400"><span class="dot bg-gray-400"></span>offline</span>';
-      return '<div class="card rounded-2xl p-4 flex items-center justify-between gap-3">' +
-        '<div class="min-w-0"><div class="font-bold truncate">' + esc(w.name) + '</div>' +
-        '<div class="font-mono text-xs text-gray-500">' + esc(w.token_display) + '</div>' +
-        '<div class="text-xs text-gray-400">' + (w.last_seen_at ? 'terakhir terlihat: ' + w.last_seen_at.slice(0, 16).replace('T', ' ') : 'belum pernah ping') + '</div></div>' +
+        ? '<span class="nb-badge nb-green"><span class="dot" style="background:#16a34a"></span>online</span>'
+        : '<span class="nb-badge" style="background:#E8E8E8"><span class="dot" style="background:#999"></span>offline</span>';
+      return '<div class="nb nb-sm p-4 flex items-center justify-between gap-3">' +
+        '<div class="min-w-0"><div class="font-extrabold truncate">' + esc(w.name) + '</div>' +
+        '<div class="font-mono text-xs font-bold text-[#16161699]">' + esc(w.token_display) + '</div>' +
+        '<div class="text-xs font-semibold text-[#16161688]">' + (w.last_seen_at ? 'terakhir terlihat: ' + w.last_seen_at.slice(0, 16).replace('T', ' ') : 'belum pernah ping') + '</div></div>' +
         '<div class="flex flex-col items-end gap-2 shrink-0">' + b +
-        '<button onclick="delWorker(' + w.id + ')" class="px-3 py-1 rounded-lg text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">Hapus</button></div></div>';
-    }).join('') : '<div class="card rounded-2xl p-6 text-sm text-gray-500 text-center">Belum ada worker. Klik "+ Buat Worker".</div>';
+        '<button onclick="delWorker(' + w.id + ')" class="nb-btn !py-1 !px-3 !text-xs !shadow-[3px_3px_0_#161616] !text-[#d92626]">Hapus</button></div></div>';
+    }).join('') : '<div class="nb nb-sm p-6 text-sm font-bold text-[#16161699] text-center">Belum ada worker. Klik "+ Buat Worker".</div>';
   }).catch(function(e) { toast(e.message); });
 }
 function delWorker(id) {

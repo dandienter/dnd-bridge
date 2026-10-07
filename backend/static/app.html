@@ -1,255 +1,257 @@
 <!DOCTYPE html>
-<html lang="id" class="">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DND Bridge - Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = { darkMode: 'class' };
-(function(){var t=localStorage.getItem('dnd-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');})();
-</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Archivo+Black&display=swap" rel="stylesheet">
 <style>
-body{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
-.grad{background:linear-gradient(135deg,#4f46e5,#7c3aed 55%,#2563eb)}
-.card{background:#fff;border:1px solid #e5e7eb}
-.dark .card{background:#111827;border-color:#1f2937}
-.input{background:#fff;border:1px solid #d1d5db;color:#111827}
-.dark .input{background:#1f2937;border-color:#374151;color:#f9fafb}
-.input:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.2)}
-.navbtn{display:flex;align-items:center;gap:.75rem;width:100%;padding:.65rem .9rem;border-radius:.75rem;font-weight:600;font-size:.9rem;color:#4b5563}
-.dark .navbtn{color:#9ca3af}
-.navbtn:hover{background:#f3f4f6}.dark .navbtn:hover{background:#1f2937}
-.navbtn.active{background:#eef2ff;color:#4f46e5}.dark .navbtn.active{background:#1e1b4b;color:#a5b4fc}
-.mnavbtn{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;padding:.5rem 0;font-size:10px;font-weight:700;color:#6b7280}
-.dark .mnavbtn{color:#9ca3af}
-.mnavbtn.active{color:#4f46e5}.dark .mnavbtn.active{color:#a5b4fc}
+:root{--ink:#161616}
+body{font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;background:#FFF8E7;color:var(--ink)}
+.ab{font-family:'Archivo Black',sans-serif}
+.dots{background-image:radial-gradient(#16161614 1.6px,transparent 1.6px);background-size:24px 24px}
+.nb{background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:6px 6px 0 var(--ink)}
+.nb-sm{box-shadow:4px 4px 0 var(--ink)}
+.nb-btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:3px solid var(--ink);border-radius:12px;padding:.6rem 1.25rem;font-weight:800;box-shadow:4px 4px 0 var(--ink);transition:transform .12s,box-shadow .12s;background:#fff;color:var(--ink);cursor:pointer;font-size:.9rem}
+.nb-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+.nb-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.nb-btn:disabled{opacity:.5;cursor:wait;transform:none}
+.nb-y{background:#FFC93C}.nb-pink{background:#FF90E8}.nb-blue{background:#7DD3FC}.nb-green{background:#8CE99A}.nb-purple{background:#B197FC}.nb-orange{background:#FFA94D}.nb-red{background:#FF6B6B;color:#fff}
+.nb-input{background:#fff;border:3px solid var(--ink);border-radius:10px;padding:.65rem .9rem;font-weight:600;width:100%;font-size:.9rem;color:var(--ink)}
+.nb-input:focus{outline:none;box-shadow:4px 4px 0 var(--ink)}
+.nb-input::placeholder{color:#16161655;font-weight:600}
+select.nb-input{appearance:none}
+.nb-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 10px;border:2px solid var(--ink);border-radius:999px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:999px;display:inline-block;border:1.5px solid var(--ink)}
+.nb-navbtn{display:flex;align-items:center;gap:.75rem;width:100%;padding:.65rem .9rem;border-radius:12px;font-weight:800;font-size:.92rem;color:var(--ink);border:3px solid transparent;transition:all .12s;text-align:left}
+.nb-navbtn:hover{background:#FFF3C4}
+.nb-navbtn.active{background:#FFC93C;border-color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.nb-mnavbtn{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;padding:.55rem 0 .4rem;font-size:10px;font-weight:800;color:#16161699;border-top:3px solid transparent;margin-top:-3px}
+.nb-mnavbtn.active{color:var(--ink);border-top-color:var(--ink);background:#FFC93C}
+.sticker{display:inline-block;border:3px solid var(--ink);border-radius:999px;padding:.25rem .9rem;font-weight:800;font-size:.72rem;box-shadow:3px 3px 0 var(--ink);text-transform:uppercase;letter-spacing:.04em}
 .tab{display:none}.tab.active{display:block;animation:fade .18s ease}
-@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.modal-bg{background:rgba(0,0,0,.55);backdrop-filter:blur(2px)}
-pre.codebox{background:#0f172a;color:#e2e8f0;border-radius:.75rem;padding:.9rem;font-size:.78rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
-.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px}
-.dot{width:8px;height:8px;border-radius:999px;display:inline-block}
-.toast{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%);z-index:100}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.modal-bg{background:rgba(22,22,22,.55)}
+.nb-code{background:#161616;color:#EDEDED;border:3px solid var(--ink);border-radius:12px;padding:.9rem;font-size:.78rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
+.nb-warn{background:#FFF3C4;border:3px solid var(--ink);border-radius:12px;padding:.7rem .9rem;font-size:.82rem;font-weight:700;box-shadow:3px 3px 0 var(--ink)}
+.nb-err{background:#FFE1E1;border:3px solid var(--ink);border-radius:12px;padding:.7rem .9rem;font-size:.82rem;font-weight:700;box-shadow:3px 3px 0 var(--ink)}
+.seg-btn{flex:1;padding:.55rem;border-radius:9px;font-size:.85rem;font-weight:800;border:3px solid transparent;color:#16161688}
+.seg-btn.on{background:#fff;border-color:var(--ink);box-shadow:3px 3px 0 var(--ink);color:var(--ink)}
+.bar{border:2px solid var(--ink);border-radius:4px 4px 0 0;min-width:0}
+.toast{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%);z-index:100;background:#161616;color:#FFF8E7;border:3px solid #161616;border-radius:12px;box-shadow:4px 4px 0 #FFC93C;padding:.6rem 1.2rem;font-weight:800;font-size:.85rem}
 @media(min-width:768px){.toast{bottom:2rem}}
+.logo-box{width:40px;height:40px;border-radius:12px;background:#161616;display:flex;align-items:center;justify-content:center;border:3px solid #161616;box-shadow:3px 3px 0 #16161633;flex-shrink:0}
 </style>
 </head>
-<body class="bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 min-h-screen">
+<body class="dots min-h-screen">
 
 <!-- ============ AUTH VIEW ============ -->
 <div id="authView" class="min-h-screen flex items-center justify-center px-4 py-8">
-  <div class="card rounded-2xl p-6 md:p-8 w-full max-w-md shadow-xl">
-    <div class="flex items-center justify-between mb-6">
-      <a href="./" class="flex items-center gap-2 font-extrabold text-xl">
-        <span class="w-8 h-8 rounded-lg grad flex items-center justify-center">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-        </span>DND Bridge
-      </a>
-      <button onclick="toggleTheme()" aria-label="Ganti tema" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800">
-        <svg class="hidden dark:block" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-        <svg class="dark:hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-      </button>
+  <div class="nb p-6 md:p-8 w-full max-w-md !shadow-[8px_8px_0_#161616]">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="logo-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFC93C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      </span>
+      <div><div class="ab text-xl leading-none">DND BRIDGE</div><div class="text-xs font-bold text-[#16161699]">Satu key untuk semua AI</div></div>
     </div>
-    <div class="flex gap-2 mb-6 p-1 rounded-xl bg-gray-100 dark:bg-gray-800">
-      <button id="tabLogin" onclick="authMode('login')" class="flex-1 py-2 rounded-lg text-sm font-bold">Masuk</button>
-      <button id="tabRegister" onclick="authMode('register')" class="flex-1 py-2 rounded-lg text-sm font-bold">Daftar</button>
+    <div class="flex gap-2 mb-6 p-1.5 rounded-xl bg-[#FFF3C4] border-[3px] border-[#161616]">
+      <button id="tabLogin" onclick="authMode('login')" class="seg-btn">Masuk</button>
+      <button id="tabRegister" onclick="authMode('register')" class="seg-btn">Daftar</button>
     </div>
-    <div id="authError" class="hidden mb-4 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"></div>
+    <div id="authError" class="hidden mb-4 nb-err"></div>
     <form onsubmit="return doAuth(event)">
-      <label class="block text-sm font-bold mb-1">Username</label>
-      <input id="authUser" class="input w-full rounded-xl px-4 py-2.5 mb-4 text-sm" placeholder="min. 3 karakter" autocomplete="username">
-      <label class="block text-sm font-bold mb-1">Password</label>
-      <input id="authPass" type="password" class="input w-full rounded-xl px-4 py-2.5 mb-5 text-sm" placeholder="min. 6 karakter" autocomplete="current-password">
-      <button id="authBtn" class="w-full py-3 rounded-xl grad text-white font-bold hover:opacity-90">Masuk</button>
+      <label class="block text-sm font-extrabold mb-1">Username</label>
+      <input id="authUser" class="nb-input mb-4" placeholder="min. 3 karakter" autocomplete="username">
+      <label class="block text-sm font-extrabold mb-1">Password</label>
+      <input id="authPass" type="password" class="nb-input mb-5" placeholder="min. 6 karakter" autocomplete="current-password">
+      <button id="authBtn" class="nb-btn nb-y w-full !py-3 text-base">Masuk</button>
     </form>
-    <p class="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">Self-hosted: akun hanya tersimpan di server ini.</p>
+    <p class="mt-4 text-xs font-semibold text-[#16161688] text-center">Self-hosted: akun hanya tersimpan di server ini.</p>
   </div>
 </div>
 
 <!-- ============ APP VIEW ============ -->
 <div id="appView" class="hidden min-h-screen md:flex">
   <!-- Sidebar desktop -->
-  <aside class="hidden md:flex flex-col w-60 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 min-h-screen sticky top-0 h-screen">
-    <a href="./" class="flex items-center gap-2 font-extrabold text-xl px-2 mb-6">
-      <span class="w-8 h-8 rounded-lg grad flex items-center justify-center">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-      </span>DND Bridge
+  <aside class="hidden md:flex flex-col w-64 shrink-0 border-r-[3px] border-[#161616] bg-white p-4 min-h-screen sticky top-0 h-screen">
+    <a href="./" class="flex items-center gap-3 px-1 mb-8">
+      <span class="logo-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFC93C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      </span>
+      <span class="ab text-lg leading-none">DND<br>BRIDGE</span>
     </a>
-    <nav class="flex flex-col gap-1" id="sideNav"></nav>
-    <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
-      <button onclick="toggleTheme()" class="navbtn">
-        <svg class="hidden dark:block" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-        <svg class="dark:hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-        <span class="dark:hidden">Mode Gelap</span><span class="hidden dark:inline">Mode Terang</span>
-      </button>
-      <button onclick="logout()" class="navbtn text-red-600 dark:text-red-400">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+    <nav class="flex flex-col gap-2" id="sideNav"></nav>
+    <div class="mt-auto pt-4 border-t-[3px] border-[#161616]">
+      <button onclick="logout()" class="nb-navbtn !text-[#d92626]">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
         Keluar
       </button>
     </div>
   </aside>
 
   <!-- Main -->
-  <main class="flex-1 min-w-0 pb-24 md:pb-8">
+  <main class="flex-1 min-w-0 pb-28 md:pb-10">
     <!-- Topbar mobile -->
-    <div class="md:hidden sticky top-0 z-30 bg-white/90 dark:bg-gray-950/90 backdrop-blur border-b border-gray-200 dark:border-gray-800 px-4 h-14 flex items-center justify-between">
-      <span class="font-extrabold flex items-center gap-2">
-        <span class="w-7 h-7 rounded-lg grad flex items-center justify-center">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-        </span>DND Bridge
+    <div class="md:hidden sticky top-0 z-30 bg-[#FFF8E7] border-b-[3px] border-[#161616] px-4 h-16 flex items-center justify-between">
+      <span class="ab flex items-center gap-2">
+        <span class="logo-box !w-9 !h-9">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFC93C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+        </span>DND BRIDGE
       </span>
-      <div class="flex items-center gap-1">
-        <button onclick="toggleTheme()" aria-label="Ganti tema" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800">
-          <svg class="hidden dark:block" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-          <svg class="dark:hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-        </button>
-        <button onclick="logout()" aria-label="Keluar" class="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-gray-200 dark:hover:bg-gray-800">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
-        </button>
-      </div>
+      <button onclick="logout()" aria-label="Keluar" class="nb-btn !p-2 !rounded-[10px] !shadow-[3px_3px_0_#161616]">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d92626" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
     </div>
 
     <div class="max-w-4xl mx-auto px-4 pt-6">
       <!-- Dashboard -->
       <section id="tab-dashboard" class="tab">
-        <h1 class="text-2xl font-extrabold mb-4">Dashboard</h1>
-        <div class="grid grid-cols-3 gap-3 mb-6">
-          <div class="card rounded-2xl p-4"><div class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Total Key</div><div id="stKeys" class="text-2xl font-black">-</div></div>
-          <div class="card rounded-2xl p-4"><div class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Request Hari Ini</div><div id="stReq" class="text-2xl font-black">-</div></div>
-          <div class="card rounded-2xl p-4"><div class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Token Hari Ini</div><div id="stTok" class="text-2xl font-black">-</div></div>
+        <div class="flex items-center gap-3 mb-5">
+          <h1 class="ab text-2xl md:text-3xl">Dashboard</h1>
+          <span class="sticker nb-green -rotate-2">Live</span>
         </div>
-        <div class="card rounded-2xl p-4 md:p-6 mb-6">
-          <h2 class="font-bold mb-1">Aktivitas 14 Hari Terakhir</h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Jumlah request per hari</p>
+        <div class="grid grid-cols-3 gap-3 md:gap-4 mb-6">
+          <div class="nb nb-sm p-3 md:p-4"><div class="text-[11px] md:text-xs font-extrabold text-[#16161699] mb-1 uppercase">Total Key</div><div id="stKeys" class="ab text-2xl md:text-3xl">-</div><div class="h-2 mt-2 rounded-full bg-[#FFC93C] border-2 border-[#161616]"></div></div>
+          <div class="nb nb-sm p-3 md:p-4"><div class="text-[11px] md:text-xs font-extrabold text-[#16161699] mb-1 uppercase">Request Hari Ini</div><div id="stReq" class="ab text-2xl md:text-3xl">-</div><div class="h-2 mt-2 rounded-full bg-[#7DD3FC] border-2 border-[#161616]"></div></div>
+          <div class="nb nb-sm p-3 md:p-4"><div class="text-[11px] md:text-xs font-extrabold text-[#16161699] mb-1 uppercase">Token Hari Ini</div><div id="stTok" class="ab text-2xl md:text-3xl">-</div><div class="h-2 mt-2 rounded-full bg-[#FF90E8] border-2 border-[#161616]"></div></div>
+        </div>
+        <div class="nb p-4 md:p-6 mb-6">
+          <h2 class="ab text-lg mb-1">Aktivitas 14 Hari Terakhir</h2>
+          <p class="text-xs font-semibold text-[#16161699] mb-4">Jumlah request per hari</p>
           <div id="chart" class="flex items-end gap-1 h-36"></div>
-          <div id="chartLabels" class="flex gap-1 mt-1 text-[9px] text-gray-400"></div>
+          <div id="chartLabels" class="flex gap-1 mt-1 text-[9px] font-bold text-[#16161688]"></div>
         </div>
-        <div class="card rounded-2xl p-4 md:p-6">
-          <h2 class="font-bold mb-3">Pemakaian per Key</h2>
+        <div class="nb p-4 md:p-6">
+          <h2 class="ab text-lg mb-3">Pemakaian per Key</h2>
           <div id="perKey" class="flex flex-col gap-2"></div>
         </div>
       </section>
 
       <!-- Provider -->
       <section id="tab-provider" class="tab">
-        <h1 class="text-2xl font-extrabold mb-4">Provider</h1>
-        <div class="card rounded-2xl p-4 md:p-6 mb-6">
-          <h2 class="font-bold mb-3">Tambah Provider</h2>
-          <div id="provError" class="hidden mb-3 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2"></div>
-          <div class="grid md:grid-cols-2 gap-3">
-            <div><label class="block text-xs font-bold mb-1">Nama</label><input id="provName" class="input w-full rounded-xl px-3 py-2 text-sm" placeholder="cth: OpenAI / OpenRouter"></div>
-            <div><label class="block text-xs font-bold mb-1">Base URL</label><input id="provUrl" class="input w-full rounded-xl px-3 py-2 text-sm font-mono" placeholder="https://api.openai.com/v1"></div>
-          </div>
-          <div class="mt-3"><label class="block text-xs font-bold mb-1">API Key Provider</label><input id="provKey" type="password" class="input w-full rounded-xl px-3 py-2 text-sm font-mono" placeholder="sk-..."></div>
-          <button onclick="addProvider()" id="provBtn" class="mt-4 px-5 py-2.5 rounded-xl grad text-white text-sm font-bold hover:opacity-90">Simpan &amp; Validasi</button>
-          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Saat disimpan, DND Bridge memanggil <span class="font-mono">GET {base_url}/models</span> untuk validasi.</p>
+        <div class="flex items-center gap-3 mb-5">
+          <h1 class="ab text-2xl md:text-3xl">Provider</h1>
+          <span class="sticker nb-blue rotate-2">Sumber AI</span>
         </div>
-        <div id="provList" class="flex flex-col gap-3"></div>
+        <div class="nb p-4 md:p-6 mb-6">
+          <h2 class="ab text-lg mb-4">Tambah Provider</h2>
+          <div id="provError" class="hidden mb-3 nb-err"></div>
+          <div class="grid md:grid-cols-2 gap-3">
+            <div><label class="block text-xs font-extrabold mb-1 uppercase">Nama</label><input id="provName" class="nb-input" placeholder="cth: OpenAI / OpenRouter"></div>
+            <div><label class="block text-xs font-extrabold mb-1 uppercase">Base URL</label><input id="provUrl" class="nb-input font-mono" placeholder="https://api.openai.com/v1"></div>
+          </div>
+          <div class="mt-3"><label class="block text-xs font-extrabold mb-1 uppercase">API Key Provider</label><input id="provKey" type="password" class="nb-input font-mono" placeholder="sk-..."></div>
+          <button onclick="addProvider()" id="provBtn" class="nb-btn nb-green mt-4">Simpan &amp; Validasi</button>
+          <p class="mt-3 text-xs font-semibold text-[#16161699]">Saat disimpan, DND Bridge memanggil <span class="font-mono font-bold">GET {base_url}/models</span> untuk validasi.</p>
+        </div>
+        <div id="provList" class="flex flex-col gap-4"></div>
       </section>
 
       <!-- Keys -->
       <section id="tab-keys" class="tab">
-        <div class="flex items-center justify-between mb-4">
-          <h1 class="text-2xl font-extrabold">Key Saya</h1>
-          <button onclick="openKeyModal()" class="px-4 py-2 rounded-xl grad text-white text-sm font-bold hover:opacity-90">+ Buat Key</button>
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-3"><h1 class="ab text-2xl md:text-3xl">Key Saya</h1><span class="sticker nb-y -rotate-2 hidden sm:inline-block">dnd-</span></div>
+          <button onclick="openKeyModal()" class="nb-btn nb-y">+ Buat Key</button>
         </div>
-        <div id="keyList" class="flex flex-col gap-3"></div>
+        <div id="keyList" class="flex flex-col gap-4"></div>
       </section>
 
       <!-- Workers -->
       <section id="tab-workers" class="tab">
-        <div class="flex items-center justify-between mb-4">
-          <h1 class="text-2xl font-extrabold">Worker Saya</h1>
-          <button onclick="openWorkerModal()" class="px-4 py-2 rounded-xl grad text-white text-sm font-bold hover:opacity-90">+ Buat Worker</button>
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-3"><h1 class="ab text-2xl md:text-3xl">Worker Saya</h1><span class="sticker nb-purple rotate-2">Auto-jawab</span></div>
+          <button onclick="openWorkerModal()" class="nb-btn nb-purple">+ Buat Worker</button>
         </div>
-        <div class="card rounded-2xl p-4 md:p-6 mb-6">
-          <h2 class="font-bold mb-2">Apa itu Worker Mode?</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400">Worker adalah akun AI milikmu yang bertugas menjawab request. Key dengan mode <span class="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">worker</span> tidak meneruskan ke provider, melainkan mengantrekan job yang diambil workermu. Buat worker, salin tokennya, lalu tempel instruksi di bawah ke akun AI-mu.</p>
+        <div class="nb nb-y p-4 md:p-6 mb-6">
+          <h2 class="ab text-lg mb-2">Apa itu Worker Mode?</h2>
+          <p class="text-sm font-semibold text-[#161616cc]">Worker adalah akun AI milikmu yang bertugas menjawab request. Key dengan mode <span class="font-mono font-bold bg-white border-2 border-[#161616] rounded px-1">worker</span> tidak meneruskan ke provider, melainkan mengantrekan job yang diambil workermu. Buat worker, salin tokennya, lalu tempel instruksi ke akun AI-mu.</p>
         </div>
-        <div id="workerList" class="flex flex-col gap-3"></div>
+        <div id="workerList" class="flex flex-col gap-4"></div>
       </section>
 
       <!-- Pengguna -->
       <section id="tab-user" class="tab">
-        <h1 class="text-2xl font-extrabold mb-4">Pengguna</h1>
-        <div class="card rounded-2xl p-6">
+        <h1 class="ab text-2xl md:text-3xl mb-5">Pengguna</h1>
+        <div class="nb p-6">
           <div class="flex items-center gap-4 mb-6">
-            <div class="w-14 h-14 rounded-2xl grad flex items-center justify-center text-white text-2xl font-black" id="userAvatar">?</div>
-            <div><div id="userName" class="font-extrabold text-lg">-</div><div id="userSince" class="text-xs text-gray-500 dark:text-gray-400">-</div></div>
+            <div class="w-16 h-16 bg-[#161616] text-[#FFC93C] border-[3px] border-[#161616] rounded-2xl shadow-[4px_4px_0_#16161633] flex items-center justify-center ab text-3xl" id="userAvatar">?</div>
+            <div><div id="userName" class="ab text-xl">-</div><div id="userSince" class="text-xs font-bold text-[#16161699]">-</div></div>
           </div>
-          <div class="text-sm text-gray-600 dark:text-gray-400 mb-6">Base URL endpoint untuk semua key kamu:<br><span class="font-mono font-bold text-indigo-600 dark:text-indigo-400" id="userBaseUrl"></span></div>
-          <button onclick="logout()" class="px-5 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700">Keluar</button>
+          <div class="nb-warn mb-6 !bg-white">Base URL endpoint untuk semua key kamu:<br><span class="font-mono font-extrabold" id="userBaseUrl"></span></div>
+          <button onclick="logout()" class="nb-btn nb-red">Keluar</button>
         </div>
       </section>
     </div>
   </main>
 
   <!-- Bottom nav mobile -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex px-2" id="mobileNav"></nav>
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t-[3px] border-[#161616] flex px-1" id="mobileNav"></nav>
 </div>
 
 <!-- Key create modal -->
 <div id="keyModal" class="hidden fixed inset-0 z-50 modal-bg flex items-center justify-center p-4">
-  <div class="card rounded-2xl p-6 w-full max-w-md">
-    <h2 class="font-extrabold text-lg mb-4">Buat Key Baru</h2>
-    <label class="block text-xs font-bold mb-1">Nama Key</label>
-    <input id="keyName" class="input w-full rounded-xl px-3 py-2 text-sm mb-3" placeholder="cth: key-hp">
-    <label class="block text-xs font-bold mb-1">Mode</label>
-    <select id="keyMode" onchange="keyModeChange()" class="input w-full rounded-xl px-3 py-2 text-sm mb-3">
+  <div class="nb p-6 w-full max-w-md !shadow-[8px_8px_0_#161616]">
+    <h2 class="ab text-xl mb-4">Buat Key Baru</h2>
+    <label class="block text-xs font-extrabold mb-1 uppercase">Nama Key</label>
+    <input id="keyName" class="nb-input mb-3" placeholder="cth: key-hp">
+    <label class="block text-xs font-extrabold mb-1 uppercase">Mode</label>
+    <select id="keyMode" onchange="keyModeChange()" class="nb-input mb-3">
       <option value="provider">Provider - teruskan ke provider AI</option>
       <option value="worker">Worker - dijawab worker AI saya</option>
     </select>
-    <div id="keyProvWrap"><label class="block text-xs font-bold mb-1">Provider</label><select id="keyProv" class="input w-full rounded-xl px-3 py-2 text-sm mb-4"></select></div>
-    <div class="flex gap-2 justify-end">
-      <button onclick="closeModal('keyModal')" class="px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800">Batal</button>
-      <button onclick="createKey()" class="px-5 py-2 rounded-xl grad text-white text-sm font-bold hover:opacity-90">Buat</button>
+    <div id="keyProvWrap"><label class="block text-xs font-extrabold mb-1 uppercase">Provider</label><select id="keyProv" class="nb-input mb-4"></select></div>
+    <div class="flex gap-3 justify-end">
+      <button onclick="closeModal('keyModal')" class="nb-btn">Batal</button>
+      <button onclick="createKey()" class="nb-btn nb-y">Buat</button>
     </div>
   </div>
 </div>
 
 <!-- Key created modal -->
 <div id="keyDoneModal" class="hidden fixed inset-0 z-50 modal-bg flex items-center justify-center p-4">
-  <div class="card rounded-2xl p-6 w-full max-w-md">
-    <h2 class="font-extrabold text-lg mb-2">Key Berhasil Dibuat</h2>
-    <div class="mb-3 text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">Salin sekarang. Key asli hanya ditampilkan sekali dan tidak bisa dilihat lagi.</div>
-    <pre class="codebox mb-2" id="newKeyVal"></pre>
-    <button onclick="copyText('newKeyVal')" class="w-full mb-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800">Salin Key</button>
-    <h3 class="font-bold text-sm mb-2">Cara Sambung</h3>
-    <pre class="codebox mb-4" id="connectBox"></pre>
-    <button onclick="copyText('connectBox')" class="w-full mb-2 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800">Salin Info Sambung</button>
-    <button onclick="closeModal('keyDoneModal');loadAll()" class="w-full py-2.5 rounded-xl grad text-white text-sm font-bold hover:opacity-90">Selesai</button>
+  <div class="nb p-6 w-full max-w-md !shadow-[8px_8px_0_#161616] max-h-[92vh] overflow-y-auto">
+    <h2 class="ab text-xl mb-3">Key Berhasil Dibuat</h2>
+    <div class="mb-3 nb-warn">Salin sekarang. Key asli hanya ditampilkan sekali dan tidak bisa dilihat lagi.</div>
+    <pre class="nb-code mb-2" id="newKeyVal"></pre>
+    <button onclick="copyText('newKeyVal')" class="nb-btn w-full mb-4 !py-2 text-sm">Salin Key</button>
+    <h3 class="ab text-sm mb-2">Cara Sambung</h3>
+    <pre class="nb-code mb-2" id="connectBox"></pre>
+    <button onclick="copyText('connectBox')" class="nb-btn w-full mb-4 !py-2 text-sm">Salin Info Sambung</button>
+    <button onclick="closeModal('keyDoneModal');loadAll()" class="nb-btn nb-y w-full !py-2.5">Selesai</button>
   </div>
 </div>
 
 <!-- Worker create modal -->
 <div id="workerModal" class="hidden fixed inset-0 z-50 modal-bg flex items-center justify-center p-4">
-  <div class="card rounded-2xl p-6 w-full max-w-md">
-    <h2 class="font-extrabold text-lg mb-4">Buat Worker Baru</h2>
-    <label class="block text-xs font-bold mb-1">Nama Worker</label>
-    <input id="workerName" class="input w-full rounded-xl px-3 py-2 text-sm mb-4" placeholder="cth: worker-akun-1">
-    <div class="flex gap-2 justify-end">
-      <button onclick="closeModal('workerModal')" class="px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800">Batal</button>
-      <button onclick="createWorker()" class="px-5 py-2 rounded-xl grad text-white text-sm font-bold hover:opacity-90">Buat</button>
+  <div class="nb p-6 w-full max-w-md !shadow-[8px_8px_0_#161616]">
+    <h2 class="ab text-xl mb-4">Buat Worker Baru</h2>
+    <label class="block text-xs font-extrabold mb-1 uppercase">Nama Worker</label>
+    <input id="workerName" class="nb-input mb-5" placeholder="cth: worker-akun-1">
+    <div class="flex gap-3 justify-end">
+      <button onclick="closeModal('workerModal')" class="nb-btn">Batal</button>
+      <button onclick="createWorker()" class="nb-btn nb-purple">Buat</button>
     </div>
   </div>
 </div>
 
 <!-- Worker token modal -->
 <div id="workerDoneModal" class="hidden fixed inset-0 z-50 modal-bg flex items-center justify-center p-4">
-  <div class="card rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-    <h2 class="font-extrabold text-lg mb-2">Worker Dibuat</h2>
-    <div class="mb-3 text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">Salin token sekarang. Token hanya ditampilkan sekali.</div>
-    <pre class="codebox mb-2" id="newWorkerToken"></pre>
-    <button onclick="copyText('newWorkerToken')" class="w-full mb-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800">Salin Token</button>
-    <h3 class="font-bold text-sm mb-2">Instruksi untuk Akun AI-mu</h3>
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Tempel instruksi ini ke akun AI milikmu agar ia bekerja sebagai worker (polling tiap 5 menit):</p>
-    <pre class="codebox mb-2" id="workerInstr"></pre>
-    <button onclick="copyText('workerInstr')" class="w-full mb-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800">Salin Instruksi</button>
-    <button onclick="closeModal('workerDoneModal');loadAll()" class="w-full py-2.5 rounded-xl grad text-white text-sm font-bold hover:opacity-90">Selesai</button>
+  <div class="nb p-6 w-full max-w-lg max-h-[92vh] overflow-y-auto !shadow-[8px_8px_0_#161616]">
+    <h2 class="ab text-xl mb-3">Worker Dibuat</h2>
+    <div class="mb-3 nb-warn">Salin token sekarang. Token hanya ditampilkan sekali.</div>
+    <pre class="nb-code mb-2" id="newWorkerToken"></pre>
+    <button onclick="copyText('newWorkerToken')" class="nb-btn w-full mb-4 !py-2 text-sm">Salin Token</button>
+    <h3 class="ab text-sm mb-2">Instruksi untuk Akun AI-mu</h3>
+    <p class="text-xs font-semibold text-[#16161699] mb-2">Tempel instruksi ini ke akun AI milikmu agar ia bekerja sebagai worker (polling tiap 5 menit):</p>
+    <pre class="nb-code mb-2" id="workerInstr"></pre>
+    <button onclick="copyText('workerInstr')" class="nb-btn w-full mb-4 !py-2 text-sm">Salin Instruksi</button>
+    <button onclick="closeModal('workerDoneModal');loadAll()" class="nb-btn nb-y w-full !py-2.5">Selesai</button>
   </div>
 </div>
 
-<div id="toast" class="toast hidden px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-bold shadow-xl"></div>
+<div id="toast" class="toast hidden"></div>
 
 <script src="static/app.js"></script>
 </body>
