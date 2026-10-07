@@ -1,5 +1,9 @@
 /* DND Bridge dashboard SPA */
 var API = '.';
+function bridgeBase() {
+  var b = window.location.pathname.replace(/\/app\/?$/, '').replace(/\/$/, '');
+  return window.location.origin + b;
+}
 var token = localStorage.getItem('dnd-token') || '';
 var providersCache = [];
 
@@ -218,7 +222,7 @@ function createKey() {
     document.getElementById('keyName').value = '';
     document.getElementById('newKeyVal').textContent = j.key;
     document.getElementById('connectBox').textContent =
-      'Base URL: ' + location.origin + '/v1\nAPI Key : ' + j.key;
+      'Base URL: ' + bridgeBase() + '/v1\nAPI Key : ' + j.key;
     document.getElementById('keyDoneModal').classList.remove('hidden');
   }).catch(function(e) { toast(e.message); });
 }
@@ -253,7 +257,7 @@ function showConnect(id) {
   var k = (window._keys || {})[id]; if (!k) return;
   document.getElementById('newKeyVal').textContent = '(key asli hanya tampil sekali saat dibuat)';
   document.getElementById('connectBox').textContent =
-    'Base URL: ' + location.origin + '/v1\nAPI Key : ' + k.key_display + '  <- pakai key asli yang kamu salin saat pembuatan';
+    'Base URL: ' + bridgeBase() + '/v1\nAPI Key : ' + k.key_display + '  <- pakai key asli yang kamu salin saat pembuatan';
   document.getElementById('keyDoneModal').classList.remove('hidden');
 }
 function toggleKey(id) {
@@ -323,7 +327,7 @@ function loadUser() {
     document.getElementById('userName').textContent = u.username;
     document.getElementById('userAvatar').textContent = u.username.charAt(0).toUpperCase();
     document.getElementById('userSince').textContent = 'Bergabung ' + (u.created_at || '').slice(0, 10);
-    document.getElementById('userBaseUrl').textContent = location.origin + '/v1';
+    document.getElementById('userBaseUrl').textContent = bridgeBase() + '/v1';
   }).catch(function() {});
 }
 
