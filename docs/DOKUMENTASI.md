@@ -4,8 +4,52 @@
 
 ---
 
+## 0. Mulai Cepat - Dari Nol Sampai Request Pertama (5 Menit)
+
+Instance live yang sudah jalan dan siap dipakai:
+
+| Keperluan | URL |
+|---|---|
+| Dashboard (daftar, kelola provider/key) | `https://43-128-108-162.sslip.io/dnd-bridge/` |
+| **Base URL untuk aplikasi AI** | `https://43-128-108-162.sslip.io/dnd-bridge/v1` |
+
+> Penting: semua path diawali `/dnd-bridge`. URL tanpa itu (mis. `https://43-128-108-162.sslip.io/v1`) akan 404.
+
+**Langkah 1 - Daftar.** Buka dashboard, klik **Daftar**, isi username + password. Kamu langsung masuk.
+
+**Langkah 2 - Sambungkan provider.** Tab **Provider** -> **+ Tambah** -> isi:
+- Nama: mis. `OpenAI`
+- Base URL: `https://api.openai.com/v1` (atau provider OpenAI-compatible lain: OpenRouter, DeepSeek, Groq, Together, dsb.)
+- API Key: key provider milikmu
+
+Klik **Simpan**. Bridge otomatis memanggil `{base_url}/models` untuk validasi. Gagal = base URL/key salah.
+
+**Langkah 3 - Buat key.** Tab **Key Saya** -> **+ Buat Key** -> nama bebas, mode **provider**, pilih provider -> **Buat**. **Salin key `dnd-...` sekarang juga** - hanya tampil sekali.
+
+**Langkah 4 - Tes panggil.** Dari terminal/HP:
+
+```bash
+curl https://43-128-108-162.sslip.io/dnd-bridge/v1/chat/completions \
+  -H "Authorization: Bearer dnd-KEYKAMU" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"Halo!"}]}'
+```
+
+Balasan 200 berisi `choices[0].message.content` = sukses. Ganti `dnd-KEYKAMU` dengan key aslimu, dan `model` dengan model yang ada di providermu (cek `GET /v1/models`).
+
+**Langkah 5 - Pakai di aplikasi AI.** Di aplikasi yang mendukung custom endpoint / OpenAI-compatible, isi:
+- Base URL: `https://43-128-108-162.sslip.io/dnd-bridge/v1`
+- API Key: `dnd-...` milikmu
+
+**Langkah 6 - Pantau.** Tab **Dashboard**: total request & token hari ini, grafik 14 hari, rincian per key.
+
+Selesai. Detail tiap langkah ada di bagian 5; referensi semua endpoint + contoh curl ada di bagian 6.
+
+---
+
 ## Daftar Isi
 
+0. [Mulai Cepat - Dari Nol Sampai Request Pertama](#0-mulai-cepat--dari-nol-sampai-request-pertama-5-menit)
 1. [Pengenalan](#1-pengenalan)
 2. [Konsep & Cara Kerja](#2-konsep--cara-kerja)
 3. [Instalasi Lokal](#3-instalasi-lokal)
@@ -211,14 +255,14 @@ Di daftar key kamu bisa:
 
 Di aplikasi AI yang mendukung *custom endpoint / OpenAI-compatible*:
 
-- **Base URL**: `https://<host-kamu>/v1` (contoh: `https://dnd-bridge-production.up.railway.app/v1`)
+- **Base URL**: `https://43-128-108-162.sslip.io/dnd-bridge/v1` (instance live; kalau self-host sendiri: `https://<host-kamu>/v1`)
 - **API Key**: key `dnd-...` milikmu
 - **Model**: isi sesuai model yang tersedia di providermu (cek via `GET /v1/models` atau daftar provider)
 
 Lalu pakai seperti biasa. Contoh dengan curl:
 
 ```bash
-curl https://<host-kamu>/v1/chat/completions \
+curl https://43-128-108-162.sslip.io/dnd-bridge/v1/chat/completions \
   -H "Authorization: Bearer dnd-xxxx" \
   -H "Content-Type: application/json" \
   -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"Halo"}]}'
@@ -228,7 +272,7 @@ Contoh Python (openai lib):
 
 ```python
 from openai import OpenAI
-client = OpenAI(base_url="https://<host-kamu>/v1", api_key="dnd-xxxx")
+client = OpenAI(base_url="https://43-128-108-162.sslip.io/dnd-bridge/v1", api_key="dnd-xxxx")
 resp = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": "Halo"}],
@@ -296,7 +340,9 @@ Tab **Pengguna** menampilkan username, tanggal bergabung, Base URL endpoint mili
 
 ---
 
-## 6. Referensi API
+## 6. Referensi API (Lengkap + Contoh Panggil)
+
+Konvensi di contoh: `BASE=https://43-128-108-162.sslip.io/dnd-bridge`, `JWT` = token dari register/login, `DNDKEY` = key `dnd-...`.
 
 Semua endpoint `/api/*` (kecuali register/login/health) butuh header `Authorization: Bearer <jwt>`. Endpoint `/v1/*` butuh `Authorization: Bearer dnd-...`.
 
@@ -308,6 +354,22 @@ Semua endpoint `/api/*` (kecuali register/login/health) butuh header `Authorizat
 | POST | `/api/auth/login` | `{username, password}` | `{token, username}` |
 | GET | `/api/auth/me` | - | `{id, username, created_at}` |
 
+```bash
+# Daftar
+curl -X POST $BASE/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"namakamu","password":"rahasia123"}'
+# -> {"token":"eyJ...","username":"namakamu"}  (simpan tokennya)
+
+# Masuk (kalau sudah punya akun)
+curl -X POST $BASE/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"namakamu","password":"rahasia123"}'
+
+# Cek user saat ini
+curl $BASE/api/auth/me -H "Authorization: Bearer $JWT"
+```
+
 ### Provider
 
 | Method | Path | Body | Respon |
@@ -315,6 +377,19 @@ Semua endpoint `/api/*` (kecuali register/login/health) butuh header `Authorizat
 | GET | `/api/providers` | - | list (api_key tersamar) |
 | POST | `/api/providers` | `{name, base_url, api_key}` | `{id, name, base_url}` / 400 |
 | DELETE | `/api/providers/{id}` | - | `{ok}` / 400 jika dipakai key |
+
+```bash
+# Tambah provider (otomatis divalidasi via {base_url}/models)
+curl -X POST $BASE/api/providers \
+  -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" \
+  -d '{"name":"OpenAI","base_url":"https://api.openai.com/v1","api_key":"sk-..."}'
+
+# Lihat daftar provider
+curl $BASE/api/providers -H "Authorization: Bearer $JWT"
+
+# Hapus provider
+curl -X DELETE $BASE/api/providers/1 -H "Authorization: Bearer $JWT"
+```
 
 ### Key
 
@@ -325,7 +400,28 @@ Semua endpoint `/api/*` (kecuali register/login/health) butuh header `Authorizat
 | POST | `/api/keys/{id}/toggle` | - | `{ok, is_active}` |
 | DELETE | `/api/keys/{id}` | - | `{ok}` |
 
-### Proxy (OpenAI-compatible)
+`mode`: `provider` (terikat provider_id, proxy langsung) atau `worker` (masuk antrean job).
+
+```bash
+# Buat key mode provider (ganti provider_id dengan id dari daftar provider)
+curl -X POST $BASE/api/keys \
+  -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" \
+  -d '{"name":"HP Android","mode":"provider","provider_id":1}'
+# -> {"id":1,"name":"HP Android","mode":"provider","key":"dnd-...","key_prefix":"dnd-Ab12"}
+
+# Buat key mode worker
+curl -X POST $BASE/api/keys \
+  -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" \
+  -d '{"name":"Bot WA","mode":"worker"}'
+
+# Nonaktifkan sementara / aktifkan lagi
+curl -X POST $BASE/api/keys/1/toggle -H "Authorization: Bearer $JWT"
+
+# Revoke (hapus permanen) - lakukan ini kalau key bocor
+curl -X DELETE $BASE/api/keys/1 -H "Authorization: Bearer $JWT"
+```
+
+### Proxy (OpenAI-compatible) - Cara Panggil
 
 | Method | Path | Auth | Keterangan |
 |---|---|---|---|
@@ -333,13 +429,52 @@ Semua endpoint `/api/*` (kecuali register/login/health) butuh header `Authorizat
 | POST | `/v1/chat/completions` | `dnd-` key | Non-streaming & SSE streaming; worker mode = antre job |
 | POST | `/v1/completions` | `dnd-` key | Legacy completions (provider saja) |
 
-Error umum: `401` key salah/nonaktif, `429` rate limit (60/mnt), `502` provider error, `504` worker timeout.
+```bash
+# Daftar model
+curl $BASE/v1/models -H "Authorization: Bearer $DNDKEY"
+
+# Chat completion biasa
+curl -X POST $BASE/v1/chat/completions \
+  -H "Authorization: Bearer $DNDKEY" -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"Halo"}]}'
+
+# Chat completion streaming (SSE)
+curl -N -X POST $BASE/v1/chat/completions \
+  -H "Authorization: Bearer $DNDKEY" -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"Halo"}],"stream":true}'
+
+# Legacy completions
+curl -X POST $BASE/v1/completions \
+  -H "Authorization: Bearer $DNDKEY" -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o-mini","prompt":"Halo","max_tokens":50}'
+```
+
+Contoh Python (pakai lib `openai`):
+
+```python
+from openai import OpenAI
+client = OpenAI(
+    base_url="https://43-128-108-162.sslip.io/dnd-bridge/v1",
+    api_key="dnd-KEYKAMU",
+)
+resp = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Halo"}],
+)
+print(resp.choices[0].message.content)
+```
+
+Error umum: `401` key salah/nonaktif, `429` rate limit (60/mnt), `502` provider error, `504` worker timeout (tidak ada worker menjawab dalam 55 detik).
 
 ### Usage
 
 | Method | Path | Respon |
 |---|---|---|
 | GET | `/api/usage/summary` | `{per_key: [...], per_day: [...]}` (14 hari) |
+
+```bash
+curl $BASE/api/usage/summary -H "Authorization: Bearer $JWT"
+```
 
 ### Worker (milik user, auth JWT)
 
@@ -349,9 +484,37 @@ Error umum: `401` key salah/nonaktif, `429` rate limit (60/mnt), `502` provider 
 | POST | `/api/workers` | `{id, name, token, token_prefix}` (token tampil sekali) |
 | DELETE | `/api/workers/{id}` | `{ok}` |
 
+```bash
+# Buat worker (salin token dndw-... yang tampil sekali)
+curl -X POST $BASE/api/workers \
+  -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" \
+  -d '{"name":"akun-ai-ku"}'
+
+# Lihat worker + status online
+curl $BASE/api/workers -H "Authorization: Bearer $JWT"
+```
+
 ### Worker agent (auth token worker)
 
-Lihat tabel di 5.6.
+`WTOKEN` = token `dndw-...` milik worker. Siklus polling yang disarankan tiap 5 menit.
+
+```bash
+# 1. Ping (lapor online + cek antrean)
+curl -X POST $BASE/api/worker/ping \
+  -H "Authorization: Bearer $WTOKEN"
+# -> {"ok":true,"pending_jobs":2}
+
+# 2. Ambil job tertua (204 = antrean kosong)
+curl $BASE/api/worker/jobs/next \
+  -H "Authorization: Bearer $WTOKEN"
+# -> {"id":7,"model":"dnd-worker","messages":[...]}
+
+# 3. Kirim jawaban
+curl -X POST $BASE/api/worker/jobs/7/answer \
+  -H "Authorization: Bearer $WTOKEN" -H "Content-Type: application/json" \
+  -d '{"text":"Jawaban dari worker..."}'
+# -> {"ok":true}
+```
 
 ---
 
@@ -371,6 +534,7 @@ Lihat tabel di 5.6.
 
 | Gejala | Penyebab umum & solusi |
 |---|---|
+| `404` di `/v1/*` atau `/api/*` (nginx) | Lupa prefix `/dnd-bridge`. Yang benar: `https://43-128-108-162.sslip.io/dnd-bridge/v1/...`, bukan `https://43-128-108-162.sslip.io/v1/...`. |
 | `401 Invalid API key` di `/v1/*` | Key salah ketik, key di-revoke, atau key dinonaktifkan. Buat key baru / aktifkan lagi. |
 | `401` di `/api/*` | Token JWT kedaluwarsa (7 hari). Masuk lagi. |
 | `429 Rate limit exceeded` | Lebih dari 60 req/menit pada satu key. Kurangi frekuensi / pakai key terpisah. |

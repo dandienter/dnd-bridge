@@ -17,14 +17,59 @@ blockquote { border-left: 4px solid #2563eb; margin: 12px 0; padding: 8px 14px; 
 .cover p { font-size: 13pt; color: #475569; }
 </style></head><body>
 <div class="cover"><h1>DND Bridge</h1>
-<p><b>Dokumentasi Lengkap — Panduan Penggunaan</b></p>
+<p><b>Dokumentasi Lengkap - Panduan Penggunaan</b></p>
 <p>Jembatan API key AI: satu key <code>dnd-...</code> untuk banyak aplikasi</p>
 <p style="margin-top:40px">Oktober 2026</p></div>
+
 <h1 id="dokumentasi-lengkap-dnd-bridge">DOKUMENTASI LENGKAP - DND Bridge</h1>
 <p><em>Self-hosted AI API Key Bridge/Proxy — versi 1.0.0</em></p>
 <hr />
+<h2 id="0-mulai-cepat-dari-nol-sampai-request-pertama-5-menit">0. Mulai Cepat - Dari Nol Sampai Request Pertama (5 Menit)</h2>
+<p>Instance live yang sudah jalan dan siap dipakai:</p>
+<table>
+<thead>
+<tr>
+<th>Keperluan</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard (daftar, kelola provider/key)</td>
+<td><code>https://43-128-108-162.sslip.io/dnd-bridge/</code></td>
+</tr>
+<tr>
+<td><strong>Base URL untuk aplikasi AI</strong></td>
+<td><code>https://43-128-108-162.sslip.io/dnd-bridge/v1</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Penting: semua path diawali <code>/dnd-bridge</code>. URL tanpa itu (mis. <code>https://43-128-108-162.sslip.io/v1</code>) akan 404.</p>
+</blockquote>
+<p><strong>Langkah 1 - Daftar.</strong> Buka dashboard, klik <strong>Daftar</strong>, isi username + password. Kamu langsung masuk.</p>
+<p><strong>Langkah 2 - Sambungkan provider.</strong> Tab <strong>Provider</strong> -&gt; <strong>+ Tambah</strong> -&gt; isi:
+- Nama: mis. <code>OpenAI</code>
+- Base URL: <code>https://api.openai.com/v1</code> (atau provider OpenAI-compatible lain: OpenRouter, DeepSeek, Groq, Together, dsb.)
+- API Key: key provider milikmu</p>
+<p>Klik <strong>Simpan</strong>. Bridge otomatis memanggil <code>{base_url}/models</code> untuk validasi. Gagal = base URL/key salah.</p>
+<p><strong>Langkah 3 - Buat key.</strong> Tab <strong>Key Saya</strong> -&gt; <strong>+ Buat Key</strong> -&gt; nama bebas, mode <strong>provider</strong>, pilih provider -&gt; <strong>Buat</strong>. <strong>Salin key <code>dnd-...</code> sekarang juga</strong> - hanya tampil sekali.</p>
+<p><strong>Langkah 4 - Tes panggil.</strong> Dari terminal/HP:</p>
+<pre><code class="language-bash">curl https://43-128-108-162.sslip.io/dnd-bridge/v1/chat/completions \
+  -H &quot;Authorization: Bearer dnd-KEYKAMU&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;Halo!&quot;}]}'
+</code></pre>
+<p>Balasan 200 berisi <code>choices[0].message.content</code> = sukses. Ganti <code>dnd-KEYKAMU</code> dengan key aslimu, dan <code>model</code> dengan model yang ada di providermu (cek <code>GET /v1/models</code>).</p>
+<p><strong>Langkah 5 - Pakai di aplikasi AI.</strong> Di aplikasi yang mendukung custom endpoint / OpenAI-compatible, isi:
+- Base URL: <code>https://43-128-108-162.sslip.io/dnd-bridge/v1</code>
+- API Key: <code>dnd-...</code> milikmu</p>
+<p><strong>Langkah 6 - Pantau.</strong> Tab <strong>Dashboard</strong>: total request &amp; token hari ini, grafik 14 hari, rincian per key.</p>
+<p>Selesai. Detail tiap langkah ada di bagian 5; referensi semua endpoint + contoh curl ada di bagian 6.</p>
+<hr />
 <h2 id="daftar-isi">Daftar Isi</h2>
 <ol>
+<li><a href="#0-mulai-cepat--dari-nol-sampai-request-pertama-5-menit">Mulai Cepat - Dari Nol Sampai Request Pertama</a></li>
 <li><a href="#1-pengenalan">Pengenalan</a></li>
 <li><a href="#2-konsep--cara-kerja">Konsep &amp; Cara Kerja</a></li>
 <li><a href="#3-instalasi-lokal">Instalasi Lokal</a></li>
@@ -260,19 +305,19 @@ JWT_SECRET=&quot;...&quot; nohup uvicorn backend.main:app --host 0.0.0.0 --port 
 <h3 id="54-cara-sambung-ke-aplikasi-ai">5.4. Cara Sambung ke Aplikasi AI</h3>
 <p>Di aplikasi AI yang mendukung <em>custom endpoint / OpenAI-compatible</em>:</p>
 <ul>
-<li><strong>Base URL</strong>: <code>https://&lt;host-kamu&gt;/v1</code> (contoh: <code>https://dnd-bridge-production.up.railway.app/v1</code>)</li>
+<li><strong>Base URL</strong>: <code>https://43-128-108-162.sslip.io/dnd-bridge/v1</code> (instance live; kalau self-host sendiri: <code>https://&lt;host-kamu&gt;/v1</code>)</li>
 <li><strong>API Key</strong>: key <code>dnd-...</code> milikmu</li>
 <li><strong>Model</strong>: isi sesuai model yang tersedia di providermu (cek via <code>GET /v1/models</code> atau daftar provider)</li>
 </ul>
 <p>Lalu pakai seperti biasa. Contoh dengan curl:</p>
-<pre><code class="language-bash">curl https://&lt;host-kamu&gt;/v1/chat/completions \
+<pre><code class="language-bash">curl https://43-128-108-162.sslip.io/dnd-bridge/v1/chat/completions \
   -H &quot;Authorization: Bearer dnd-xxxx&quot; \
   -H &quot;Content-Type: application/json&quot; \
   -d '{&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;Halo&quot;}]}'
 </code></pre>
 <p>Contoh Python (openai lib):</p>
 <pre><code class="language-python">from openai import OpenAI
-client = OpenAI(base_url=&quot;https://&lt;host-kamu&gt;/v1&quot;, api_key=&quot;dnd-xxxx&quot;)
+client = OpenAI(base_url=&quot;https://43-128-108-162.sslip.io/dnd-bridge/v1&quot;, api_key=&quot;dnd-xxxx&quot;)
 resp = client.chat.completions.create(
     model=&quot;gpt-4o-mini&quot;,
     messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Halo&quot;}],
@@ -345,7 +390,8 @@ print(resp.choices[0].message.content)
 <h3 id="57-pengguna-keluar">5.7. Pengguna &amp; Keluar</h3>
 <p>Tab <strong>Pengguna</strong> menampilkan username, tanggal bergabung, Base URL endpoint milikmu, dan tombol <strong>Keluar</strong> (menghapus token dari browser).</p>
 <hr />
-<h2 id="6-referensi-api">6. Referensi API</h2>
+<h2 id="6-referensi-api-lengkap-contoh-panggil">6. Referensi API (Lengkap + Contoh Panggil)</h2>
+<p>Konvensi di contoh: <code>BASE=https://43-128-108-162.sslip.io/dnd-bridge</code>, <code>JWT</code> = token dari register/login, <code>DNDKEY</code> = key <code>dnd-...</code>.</p>
 <p>Semua endpoint <code>/api/*</code> (kecuali register/login/health) butuh header <code>Authorization: Bearer &lt;jwt&gt;</code>. Endpoint <code>/v1/*</code> butuh <code>Authorization: Bearer dnd-...</code>.</p>
 <h3 id="auth">Auth</h3>
 <table>
@@ -378,6 +424,20 @@ print(resp.choices[0].message.content)
 </tr>
 </tbody>
 </table>
+<pre><code class="language-bash"># Daftar
+curl -X POST $BASE/api/auth/register \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;username&quot;:&quot;namakamu&quot;,&quot;password&quot;:&quot;rahasia123&quot;}'
+# -&gt; {&quot;token&quot;:&quot;eyJ...&quot;,&quot;username&quot;:&quot;namakamu&quot;}  (simpan tokennya)
+
+# Masuk (kalau sudah punya akun)
+curl -X POST $BASE/api/auth/login \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;username&quot;:&quot;namakamu&quot;,&quot;password&quot;:&quot;rahasia123&quot;}'
+
+# Cek user saat ini
+curl $BASE/api/auth/me -H &quot;Authorization: Bearer $JWT&quot;
+</code></pre>
 <h3 id="provider">Provider</h3>
 <table>
 <thead>
@@ -409,6 +469,17 @@ print(resp.choices[0].message.content)
 </tr>
 </tbody>
 </table>
+<pre><code class="language-bash"># Tambah provider (otomatis divalidasi via {base_url}/models)
+curl -X POST $BASE/api/providers \
+  -H &quot;Authorization: Bearer $JWT&quot; -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;name&quot;:&quot;OpenAI&quot;,&quot;base_url&quot;:&quot;https://api.openai.com/v1&quot;,&quot;api_key&quot;:&quot;sk-...&quot;}'
+
+# Lihat daftar provider
+curl $BASE/api/providers -H &quot;Authorization: Bearer $JWT&quot;
+
+# Hapus provider
+curl -X DELETE $BASE/api/providers/1 -H &quot;Authorization: Bearer $JWT&quot;
+</code></pre>
 <h3 id="key">Key</h3>
 <table>
 <thead>
@@ -446,7 +517,25 @@ print(resp.choices[0].message.content)
 </tr>
 </tbody>
 </table>
-<h3 id="proxy-openai-compatible">Proxy (OpenAI-compatible)</h3>
+<p><code>mode</code>: <code>provider</code> (terikat provider_id, proxy langsung) atau <code>worker</code> (masuk antrean job).</p>
+<pre><code class="language-bash"># Buat key mode provider (ganti provider_id dengan id dari daftar provider)
+curl -X POST $BASE/api/keys \
+  -H &quot;Authorization: Bearer $JWT&quot; -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;name&quot;:&quot;HP Android&quot;,&quot;mode&quot;:&quot;provider&quot;,&quot;provider_id&quot;:1}'
+# -&gt; {&quot;id&quot;:1,&quot;name&quot;:&quot;HP Android&quot;,&quot;mode&quot;:&quot;provider&quot;,&quot;key&quot;:&quot;dnd-...&quot;,&quot;key_prefix&quot;:&quot;dnd-Ab12&quot;}
+
+# Buat key mode worker
+curl -X POST $BASE/api/keys \
+  -H &quot;Authorization: Bearer $JWT&quot; -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;name&quot;:&quot;Bot WA&quot;,&quot;mode&quot;:&quot;worker&quot;}'
+
+# Nonaktifkan sementara / aktifkan lagi
+curl -X POST $BASE/api/keys/1/toggle -H &quot;Authorization: Bearer $JWT&quot;
+
+# Revoke (hapus permanen) - lakukan ini kalau key bocor
+curl -X DELETE $BASE/api/keys/1 -H &quot;Authorization: Bearer $JWT&quot;
+</code></pre>
+<h3 id="proxy-openai-compatible-cara-panggil">Proxy (OpenAI-compatible) - Cara Panggil</h3>
 <table>
 <thead>
 <tr>
@@ -477,7 +566,37 @@ print(resp.choices[0].message.content)
 </tr>
 </tbody>
 </table>
-<p>Error umum: <code>401</code> key salah/nonaktif, <code>429</code> rate limit (60/mnt), <code>502</code> provider error, <code>504</code> worker timeout.</p>
+<pre><code class="language-bash"># Daftar model
+curl $BASE/v1/models -H &quot;Authorization: Bearer $DNDKEY&quot;
+
+# Chat completion biasa
+curl -X POST $BASE/v1/chat/completions \
+  -H &quot;Authorization: Bearer $DNDKEY&quot; -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;Halo&quot;}]}'
+
+# Chat completion streaming (SSE)
+curl -N -X POST $BASE/v1/chat/completions \
+  -H &quot;Authorization: Bearer $DNDKEY&quot; -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;Halo&quot;}],&quot;stream&quot;:true}'
+
+# Legacy completions
+curl -X POST $BASE/v1/completions \
+  -H &quot;Authorization: Bearer $DNDKEY&quot; -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;model&quot;:&quot;gpt-4o-mini&quot;,&quot;prompt&quot;:&quot;Halo&quot;,&quot;max_tokens&quot;:50}'
+</code></pre>
+<p>Contoh Python (pakai lib <code>openai</code>):</p>
+<pre><code class="language-python">from openai import OpenAI
+client = OpenAI(
+    base_url=&quot;https://43-128-108-162.sslip.io/dnd-bridge/v1&quot;,
+    api_key=&quot;dnd-KEYKAMU&quot;,
+)
+resp = client.chat.completions.create(
+    model=&quot;gpt-4o-mini&quot;,
+    messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Halo&quot;}],
+)
+print(resp.choices[0].message.content)
+</code></pre>
+<p>Error umum: <code>401</code> key salah/nonaktif, <code>429</code> rate limit (60/mnt), <code>502</code> provider error, <code>504</code> worker timeout (tidak ada worker menjawab dalam 55 detik).</p>
 <h3 id="usage">Usage</h3>
 <table>
 <thead>
@@ -495,6 +614,8 @@ print(resp.choices[0].message.content)
 </tr>
 </tbody>
 </table>
+<pre><code class="language-bash">curl $BASE/api/usage/summary -H &quot;Authorization: Bearer $JWT&quot;
+</code></pre>
 <h3 id="worker-milik-user-auth-jwt">Worker (milik user, auth JWT)</h3>
 <table>
 <thead>
@@ -522,8 +643,32 @@ print(resp.choices[0].message.content)
 </tr>
 </tbody>
 </table>
+<pre><code class="language-bash"># Buat worker (salin token dndw-... yang tampil sekali)
+curl -X POST $BASE/api/workers \
+  -H &quot;Authorization: Bearer $JWT&quot; -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;name&quot;:&quot;akun-ai-ku&quot;}'
+
+# Lihat worker + status online
+curl $BASE/api/workers -H &quot;Authorization: Bearer $JWT&quot;
+</code></pre>
 <h3 id="worker-agent-auth-token-worker">Worker agent (auth token worker)</h3>
-<p>Lihat tabel di 5.6.</p>
+<p><code>WTOKEN</code> = token <code>dndw-...</code> milik worker. Siklus polling yang disarankan tiap 5 menit.</p>
+<pre><code class="language-bash"># 1. Ping (lapor online + cek antrean)
+curl -X POST $BASE/api/worker/ping \
+  -H &quot;Authorization: Bearer $WTOKEN&quot;
+# -&gt; {&quot;ok&quot;:true,&quot;pending_jobs&quot;:2}
+
+# 2. Ambil job tertua (204 = antrean kosong)
+curl $BASE/api/worker/jobs/next \
+  -H &quot;Authorization: Bearer $WTOKEN&quot;
+# -&gt; {&quot;id&quot;:7,&quot;model&quot;:&quot;dnd-worker&quot;,&quot;messages&quot;:[...]}
+
+# 3. Kirim jawaban
+curl -X POST $BASE/api/worker/jobs/7/answer \
+  -H &quot;Authorization: Bearer $WTOKEN&quot; -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;text&quot;:&quot;Jawaban dari worker...&quot;}'
+# -&gt; {&quot;ok&quot;:true}
+</code></pre>
 <hr />
 <h2 id="7-keamanan">7. Keamanan</h2>
 <ol>
@@ -545,6 +690,10 @@ print(resp.choices[0].message.content)
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>404</code> di <code>/v1/*</code> atau <code>/api/*</code> (nginx)</td>
+<td>Lupa prefix <code>/dnd-bridge</code>. Yang benar: <code>https://43-128-108-162.sslip.io/dnd-bridge/v1/...</code>, bukan <code>https://43-128-108-162.sslip.io/v1/...</code>.</td>
+</tr>
 <tr>
 <td><code>401 Invalid API key</code> di <code>/v1/*</code></td>
 <td>Key salah ketik, key di-revoke, atau key dinonaktifkan. Buat key baru / aktifkan lagi.</td>
@@ -600,4 +749,5 @@ Tab Key Saya -&gt; <strong>Revoke</strong> key lama -&gt; <strong>+ Buat Key</st
 <p><strong>Apakah worker bisa lebih dari satu per user?</strong>
 Bisa. Job diambil berdasarkan urutan tertua oleh worker mana pun milik user tersebut.</p>
 <hr />
-<p><em>Dokumentasi ini menyertai DND Bridge v1.0.0. Dibuat Oktober 2026.</em></p></body></html>
+<p><em>Dokumentasi ini menyertai DND Bridge v1.0.0. Dibuat Oktober 2026.</em></p>
+</body></html>
