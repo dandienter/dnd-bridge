@@ -1,5 +1,5 @@
 /* DND Bridge dashboard SPA */
-var API = '';
+var API = window.location.pathname.indexOf('/dnd-bridge') === 0 ? '/dnd-bridge' : '';
 var token = localStorage.getItem('dnd-token') || '';
 var providersCache = [];
 
